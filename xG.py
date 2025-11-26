@@ -357,8 +357,8 @@ ax_h1.set_xlim(0, end_1+1)
 ax_h1.set_xticks(list(range(0, end_1+1, 5)))
 ax_h1.set_ylabel("Kumulierte xGAP", fontproperties=font_props, fontsize=15, color=text_color)
 ax_h1.set_xlabel("Minute", fontproperties=font_props, fontsize=15, color=text_color)
-ax_h1.scatter(gMin_h_1, goals_h_1, s=80, marker="o", facecolors=color_home, edgecolors="white", zorder=5)
-ax_h1.scatter(gMin_a_1, goals_a_1, s=80, marker="o", facecolors=color_away, edgecolors="white", zorder=5)
+ax_h1.scatter(gMin_h_1, goals_h_1, s=80, marker="o", facecolors=color_home, edgecolors=background_color, zorder=5)
+ax_h1.scatter(gMin_a_1, goals_a_1, s=80, marker="o", facecolors=color_away, edgecolors=background_color, zorder=5)
 
 # Stufendiagramm der 2. Halbzeit plotten
 ax_h2.step(Min_h_2, cum_xGAP_h_2, color=color_home, label=home_team, where="post", linewidth=2)
@@ -368,8 +368,8 @@ ax_h2.set_xlim(40, end_2+41)
 ax_h2.set_xticks(list(range(40, end_2+41, 5)))
 ax_h2.set_xlabel("Minute", fontproperties=font_props, fontsize=15, color=text_color)
 ax_h2.yaxis.tick_right()
-ax_h2.scatter(gMin_h_2, goals_h_2, s=80, marker="o", facecolors=color_home, edgecolors="white", zorder=5)
-ax_h2.scatter(gMin_a_2, goals_a_2, s=80, marker="o", facecolors=color_away, edgecolors="white", zorder=5)
+ax_h2.scatter(gMin_h_2, goals_h_2, s=80, marker="o", facecolors=color_home, edgecolors=background_color, zorder=5)
+ax_h2.scatter(gMin_a_2, goals_a_2, s=80, marker="o", facecolors=color_away, edgecolors=background_color, zorder=5)
 
 # Achsenbeschriftung anpassen
 for ticks in ax_h1.get_xticklabels() + ax_h1.get_yticklabels():
@@ -384,5 +384,6 @@ for ticks in ax_h2.get_xticklabels() + ax_h2.get_yticklabels():
 # Y-Ticks auf eine Nachkommastelle runden
 ax_h1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
 
 st.pyplot(fig)
