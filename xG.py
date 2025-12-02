@@ -224,9 +224,9 @@ liste = df_comb.apply(
         f"{"   " + x['Ereignis']}"
         f"{"   " + x["Vereinsname"] if x['Ereignis'] == "Rot" else ""}"
         f"{'   ' + x['Spieler'] if pd.notna(x['Spieler']) else ''}"  # Schütze (falls vorhanden)
-        f"{', V: ' + x['Vorlage'] if pd.notna(x['Vorlage']) else ''}"  # Vorlage (falls vorhanden)
-        f"{'   [' + format(x['xG'], '.2f') + ' xG]' if pd.notna(x['xG']) else ''}"  # xG-Wert
+        f"{', ' + x['Vorlage'] if pd.notna(x['Vorlage']) else ''}"  # Vorlage (falls vorhanden)
         f"{'   (' + x['Entstehung'] + ')' if x['Entstehung'] != 'Regulär' else ''}"  # Entstehung (nur wenn ≠ Regulär)
+        f"{'   ' + format(x['xG']*100, '.0f') + '%' if pd.notna(x['xG']) else ''}"  # xG-Wert
     ),
     axis=1
 )
@@ -387,3 +387,4 @@ ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
 st.pyplot(fig)
+
