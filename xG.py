@@ -274,7 +274,7 @@ ax1.set_facecolor(background_color)
 ax1.axis("off")
 ax1.text(0.5, 0.91, "Spielverlauf", ha="center", va="center", fontproperties=font_props, fontsize=30, color=text_color)
 for i, txt in enumerate(liste):
-    ax1.text(0.05, 0.85 - i * 0.05, txt, transform=ax1.transAxes, fontsize=13, fontproperties=font_props, va="top", ha="left", color=text_color)
+    ax1.text(0.05, 0.85 - i * 0.05, txt, transform=ax1.transAxes, fontsize=14, fontproperties=font_props, va="top", ha="left", color=text_color)
 
 # --- xG-Map ---
 # Spielfeld zeichnen
@@ -387,4 +387,5 @@ ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
 st.pyplot(fig)
+
 
