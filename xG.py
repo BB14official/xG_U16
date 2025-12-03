@@ -13,30 +13,22 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-df_new = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+df_new = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Grafik
 game = st.selectbox("Spiel auswählen", spiele["SID"].sort_values().unique())
 
-# Metriken
-game_filter = list(range(1,7,1))
-sort = "xGChain"
-
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
                   
-df_new = df_new[["SID", "TID", "HG", "GID", "AbNr", "Min", "HZ", "PR", "SpSt", "GS", "AP", "Ergeb", "Phase",
-                 "VNr", "2VNr", "3VNr", "4VNr", "5VNr", "6VNr", "7VNr", "8VNr", "9VNr",
-                 "SNr", "xFe", "yFe", "xG"]].copy()
-
 from datetime import datetime
 date = spiele.loc[spiele["SID"]==game, "Datum"].iloc[0]
 date = date.strftime("%d.%m.%Y")
@@ -246,6 +238,7 @@ m_p_h_loss = np.sum(np.triu(m_match_probs, 1))
 m_xp_h = (m_p_h_win * 3) + (m_p_h_draw * 1) + (m_p_h_loss * 0)
 m_xp_a = (m_p_h_win * 0) + (m_p_h_draw * 1) + (m_p_h_loss * 3)
 
+# === AUSGABE ===
 #GridSpec initialisieren
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import to_rgba
@@ -385,7 +378,177 @@ for ticks in ax_h2.get_xticklabels() + ax_h2.get_yticklabels():
 ax_h1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
-
 st.pyplot(fig)
 
+# === METRIKEN ===
+st.subheader("Metriken")
+start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), value=[1, spiele["SID"].max()])
+modus = st.radio("Anzeigeart",["Absolut", "Pro 80 Minuten"])
 
+spiele = spiele[spiele["SID"].between(start, end)].copy()
+abschlüsse = df_new[df_new["SID"].between(start, end)].copy()
+spielzeiten = spielzeiten[spielzeiten["SID"].between(start, end)].copy()
+karten = karten[karten["SID"].between(start, end)].copy()
+
+startelf = (spielzeiten[spielzeiten["1Von"] == 1].copy())["Nr"].value_counts().reset_index(name="Startelf")
+spieler = spieler.merge(startelf, on="Nr", how="left")
+spieler["Startelf"] = spieler["Startelf"].fillna(0).astype(int)
+
+spielzeit_max = spiele["1. HZ"].sum() + spiele["2. HZ"].sum()
+
+spielzeit_sum = (spielzeiten.groupby("Nr", as_index=False).agg(Spielzeit=("SZ", "sum")))
+spieler = spieler.merge(spielzeit_sum, on="Nr", how="left")
+spieler["Spielzeit"] = spieler["Spielzeit"].fillna(0).astype(int)
+
+spieler["Spielzeitanteil"] = ((spieler["Spielzeit"]/spielzeit_max).round(2)*100).astype(int)
+
+xg_pro_spieler = (abschlüsse.groupby("SNr")["xG"].sum().reset_index().rename(columns={"SNr": "Nr"}))
+spieler = spieler.merge(xg_pro_spieler, on="Nr", how="left")
+spieler["xG"] = spieler["xG"].fillna(0).round(2)
+
+schüsse_pro_spieler = abschlüsse["SNr"].value_counts().reset_index()
+schüsse_pro_spieler.columns = ["Nr", "Schüsse"]
+spieler = spieler.merge(schüsse_pro_spieler, on="Nr", how="left")
+spieler["Schüsse"] = (spieler["Schüsse"].fillna(0).round(2)).astype(int)
+
+tore = abschlüsse[abschlüsse["Ergeb"]=="Tor"].copy()
+
+tore_pro_spieler = tore["SNr"].value_counts().reset_index()
+tore_pro_spieler.columns = ["Nr", "Tore"]
+spieler = spieler.merge(tore_pro_spieler, on="Nr", how="left")
+spieler["Tore"] = (spieler["Tore"].fillna(0).round(2)).astype(int)
+
+vorlagen_pro_spieler = tore["VNr"].value_counts().reset_index()
+vorlagen_pro_spieler.columns = ["Nr", "Vorlagen"]
+spieler = spieler.merge(vorlagen_pro_spieler, on="Nr", how="left")
+spieler["Vorlagen"] = (spieler["Vorlagen"].fillna(0).round(2)).astype(int)
+
+xa_pro_spieler = (abschlüsse.groupby("VNr")["xG"].sum().reset_index().rename(columns={"VNr": "Nr", "xG": "xA"}))
+spieler = spieler.merge(xa_pro_spieler, on="Nr", how="left")
+spieler["xA"] = spieler["xA"].fillna(0).round(2)
+
+spieler["Effizienz"] = spieler["Tore"]-spieler["xG"]
+
+# xGChain
+df_xgc = abschlüsse.copy()
+
+invol = ['VNr', '2VNr', '3VNr', '4VNr', '5VNr', '6VNr', '7VNr', '8VNr', '9VNr']
+
+for i in invol:
+    df_xgc.loc[df_xgc[i] == df_xgc["SNr"], i] = pd.NA
+
+invol.append("SNr")
+dfs = []
+
+for i in invol:
+    temp = (df_xgc.groupby(i)["xG"].sum().reset_index().rename(columns={i: "Nr", "xG": "xGChain"}))
+    dfs.append(temp)
+
+xgc_pro_spieler = pd.concat(dfs, ignore_index=True)
+xgc_pro_spieler = (xgc_pro_spieler.groupby("Nr", as_index=False)["xGChain"].sum())
+
+spieler = spieler.merge(xgc_pro_spieler, on="Nr", how="left")
+spieler["xGChain"] = spieler["xGChain"].fillna(0).round(2)
+
+# --- xPlusMinus ---
+# xGAP berechnen
+xgap = abschlüsse.groupby(["SID", "AP"])["xG"].apply(lambda x: 1 - np.prod(1 - x))
+
+# max AbNr pro AP bestimmen
+max_abnr = abschlüsse.groupby(["SID", "AP"])["AbNr"].transform("max")
+
+# neue Spalte xGAP setzen (nur bei höchster AbNr einer AP)
+abschlüsse["xGAP"] = np.where(
+    abschlüsse["AbNr"] == max_abnr,
+    abschlüsse.set_index(["SID", "AP"]).index.map(xgap),
+    np.nan
+)
+
+abschlüsse_1 = abschlüsse[abschlüsse["HZ"] == 1].copy()
+abschlüsse_2 = abschlüsse[abschlüsse["HZ"] == 2].copy()
+
+# Hilfsspalten erstellen
+nummern = spieler["Nr"].unique()
+
+for i in nummern:
+    abschlüsse_1[f"Sp{i}"] = False  # Spalte anlegen
+    
+    # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten in HZ1 hat
+    if i in spielzeiten["Nr"].values:
+        zeiten = spielzeiten.loc[spielzeiten["Nr"] == i, ["SID", "1Von", "1Bis"]].dropna()
+        
+        # Wenn es mindestens eine gültige Zeile gibt
+        if not zeiten.empty:
+            for _, row in zeiten.iterrows():
+                sid = row["SID"]
+                von = row["1Von"]
+                bis = row["1Bis"]
+                
+                # Maske mit Pandas-Logik (das ist der eigentliche "if"-Inhalt)
+                mask = (abschlüsse_1["SID"] == sid) & (abschlüsse_1["Min"].between(von, bis))
+                abschlüsse_1.loc[mask, f"Sp{i}"] = True
+
+for i in nummern:
+    abschlüsse_2[f"Sp{i}"] = False  # Spalte anlegen
+    
+    # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten in HZ1 hat
+    if i in spielzeiten["Nr"].values:
+        zeiten = spielzeiten.loc[spielzeiten["Nr"] == i, ["SID", "2Von", "2Bis"]].dropna()
+        
+        # Wenn es mindestens eine gültige Zeile gibt
+        if not zeiten.empty:
+            for _, row in zeiten.iterrows():
+                sid = row["SID"]
+                von = row["2Von"]
+                bis = row["2Bis"]
+                
+                # Maske mit Pandas-Logik (das ist der eigentliche "if"-Inhalt)
+                mask = (abschlüsse_2["SID"] == sid) & (abschlüsse_2["Min"].between(von, bis))
+                abschlüsse_2.loc[mask, f"Sp{i}"] = True
+
+abschlüsse = pd.concat([abschlüsse_1, abschlüsse_2], ignore_index=True)
+
+abschlüsse = abschlüsse.sort_values(by=["SID", "HZ", "Min", "AP"], ascending=[True, True, True, True]).reset_index(drop=True)
+
+abschlüsse_for = abschlüsse[abschlüsse["TID"] == "FCN"].copy()
+abschlüsse_aga = abschlüsse[abschlüsse["TID"] != "FCN"].copy()
+
+import re
+
+sp_cols = [c for c in abschlüsse_for.columns if re.fullmatch(r"Sp\d+", c)]
+
+abschlüsse_for[sp_cols] = abschlüsse_for[sp_cols].fillna(False).astype(int)
+abschlüsse_for[sp_cols] = abschlüsse_for[sp_cols].mul(abschlüsse_for["xGAP"], axis=0)
+
+abschlüsse_aga[sp_cols] = abschlüsse_aga[sp_cols].fillna(False).astype(int)
+abschlüsse_aga[sp_cols] = abschlüsse_aga[sp_cols].mul(abschlüsse_aga["xGAP"], axis=0)
+
+xg_imp = (abschlüsse_for[sp_cols].sum(axis=0).reset_index().rename(columns={"index": "Spalte", 0: "xGImpact"}))
+xg_imp["Nr"] = xg_imp["Spalte"].str.extract(r"(\d+)").astype(int)
+xg_imp = xg_imp[["Nr", "xGImpact"]].sort_values("Nr").reset_index(drop=True)
+
+xga_imp = (abschlüsse_aga[sp_cols].sum(axis=0).reset_index().rename(columns={"index": "Spalte", 0: "xGAImpact"}))
+xga_imp["Nr"] = xga_imp["Spalte"].str.extract(r"(\d+)").astype(int)
+xga_imp = xga_imp[["Nr", "xGAImpact"]].sort_values("Nr").reset_index(drop=True)
+
+spieler = (spieler.merge(xg_imp, on="Nr", how="left").merge(xga_imp, on="Nr", how="left"))
+spieler[["xGImpact", "xGAImpact"]] = spieler[["xGImpact", "xGAImpact"]].round(2)
+spieler["xPlusMinus"] = spieler["xGImpact"]-spieler["xGAImpact"]
+
+spieler = spieler[['Nr', 'Vorname', 'Nachname', 'Startelf', 'Spielzeit', 'Spielzeitanteil', 
+                   'Schüsse', 'Tore', 'xG', 'Effizienz', 'Vorlagen', 'xA',
+                   'xGChain', 'xGImpact', 'xGAImpact', 'xPlusMinus']]
+
+if modus == "Pro 80 Minuten":
+    spieler["Schüsse"] = ((spieler["Schüsse"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Tore"] = ((spieler["Tore"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Tore"] = ((spieler["Tore"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Effizienz"] = ((spieler["Effizienz"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Vorlagen"] = ((spieler["Vorlagen"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xA"] = ((spieler["xA"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xGChain"] = ((spieler["xGChain"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xGImpact"] = ((spieler["xGImpact"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xGAImpact"] = ((spieler["xGAImpact"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xPlusMinus"] = ((spieler["xPlusMinus"]/spieler["Spielzeit"])*80).round(2)
+
+st.dataframe(spieler, hide_index=True)
