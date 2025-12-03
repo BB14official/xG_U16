@@ -14,7 +14,7 @@ st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
 df_new = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
 spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
 spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
 spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
@@ -387,3 +387,4 @@ ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
 st.pyplot(fig)
+
