@@ -13,18 +13,18 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-df_new = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+df_new = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Grafik
 game = st.selectbox("Spiel auswählen", spiele["SID"].sort_values().unique())
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -547,7 +547,7 @@ spieler = spieler[['Nr', 'Vorname', 'Nachname', 'Startelf', 'Spielzeit', 'Spielz
 if modus == "Pro 80 Minuten":
     spieler["Schüsse"] = ((spieler["Schüsse"]/spieler["Spielzeit"])*80).round(2)
     spieler["Tore"] = ((spieler["Tore"]/spieler["Spielzeit"])*80).round(2)
-    spieler["Tore"] = ((spieler["Tore"]/spieler["Spielzeit"])*80).round(2)
+    spieler["xG"] = ((spieler["xG"]/spieler["Spielzeit"])*80).round(2)
     spieler["Effizienz"] = ((spieler["Effizienz"]/spieler["Spielzeit"])*80).round(2)
     spieler["Vorlagen"] = ((spieler["Vorlagen"]/spieler["Spielzeit"])*80).round(2)
     spieler["xA"] = ((spieler["xA"]/spieler["Spielzeit"])*80).round(2)
@@ -555,6 +555,5 @@ if modus == "Pro 80 Minuten":
     spieler["xGImpact"] = ((spieler["xGImpact"]/spieler["Spielzeit"])*80).round(2)
     spieler["xGAImpact"] = ((spieler["xGAImpact"]/spieler["Spielzeit"])*80).round(2)
     spieler["xPlusMinus"] = ((spieler["xPlusMinus"]/spieler["Spielzeit"])*80).round(2)
-
 
 st.dataframe(spieler, hide_index=True)
