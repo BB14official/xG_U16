@@ -13,18 +13,18 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-df_new = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+df_new = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Grafik
 game = st.selectbox("Spiel auswählen", spiele["SID"].sort_values().unique())
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -382,8 +382,13 @@ st.pyplot(fig)
 
 # === METRIKEN ===
 st.subheader("Metriken")
-start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), value=[1, spiele["SID"].max()])
-modus = st.radio("Anzeigeart",["Absolut", "Pro 80 Minuten"])
+
+col1, col2 = st.columns(2)
+
+with col1:
+    start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), value=[1, spiele["SID"].max()])
+with col2:
+    modus = st.radio("",["Absolut", "Pro 80 Minuten"], horizontal=True)
 
 spiele = spiele[spiele["SID"].between(start, end)].copy()
 abschlüsse = df_new[df_new["SID"].between(start, end)].copy()
@@ -550,6 +555,5 @@ if modus == "Pro 80 Minuten":
     spieler["xGImpact"] = ((spieler["xGImpact"]/spieler["Spielzeit"])*80).round(2)
     spieler["xGAImpact"] = ((spieler["xGAImpact"]/spieler["Spielzeit"])*80).round(2)
     spieler["xPlusMinus"] = ((spieler["xPlusMinus"]/spieler["Spielzeit"])*80).round(2)
-
 
 st.dataframe(spieler, hide_index=True)
