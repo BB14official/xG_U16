@@ -28,7 +28,7 @@ game_filter = list(range(1,7,1))
 sort = "xGChain"
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -387,4 +387,5 @@ ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
 st.pyplot(fig)
+
 
