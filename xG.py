@@ -15,12 +15,12 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-df_new = pd.read_csv("xG/abschlüsse_xG.csv")
-teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+df_new = pd.read_csv("abschlüsse_xG.csv")
+teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Filter erstellen
 spiele_filter = spiele[["SID", "Heim", "Gast"]].copy()
@@ -33,7 +33,7 @@ game_filter = st.selectbox("Spiel auswählen", spiele_filter["Spiel"].unique())
 game = spiele_filter.loc[spiele_filter["Spiel"]==game_filter, "SID"].values[0]
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -648,4 +648,5 @@ with col1:
 with col2:
     st.markdown(f"Tore: {int(fcn["Tore"].sum())} ({float(fcn["xG"].sum().round(2))})")
 with col3:
+
     st.markdown(f"Gegentore: {int(opp["Tore"].sum())} ({float(opp["xG"].sum().round(2))})")
