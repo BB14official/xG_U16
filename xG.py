@@ -15,25 +15,65 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-df_new = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
-# Filter erstellen
+# Spielphasen ersetzen
+abschlüsse["Spielphase"] = abschlüsse["Spielphase"].replace({
+    "nFS": "Freistoss",
+    "FSS": "Freistoss",
+    "FSF": "Freistoss",
+    "EB": "Eigener Ballbesitz",
+    "EW": "Eigener Ballbesitz",
+    "nEW": "Eigener Ballbesitz",
+    "USO": "Umschalten Offensiv",
+    "n11M": "Umschalten Offensiv",
+    "E": "Ecke",
+    "nE": "Ecke",
+    "11M": "Elfmeter"})
+abschlüsse.drop("Phase", axis=1, inplace=True)
+
+# Körperteile umbenennen
+abschlüsse["Körperteil"] = abschlüsse["Körperteil"].replace({
+    "L": "Links",
+    "R": "Rechts",
+    "K": "Kopf",
+    "S": "Sonstige"
+})
+
+# Vorbereitungen ersetzen
+abschlüsse["Vorbereitung"] = abschlüsse["VorT"].replace({
+    "TieferPass": "Tiefer Pass",
+    "HoheFlanke": "Hohe Flanke",
+    "FlacheHereingabe": "Flache Hereingabe",
+    "Dribbling": "Dribbling",    
+    "DirekterStandard": "Direkter Standard",
+    "UnkontrollierteVorbereitung": "Sonstige",
+    "KontrollierteVorlage": "Sonstige",
+})
+abschlüsse.drop("VorT", axis=1, inplace=True)
+
+# Spiele-Filter erstellen
 spiele_filter = spiele[["SID", "Heim", "Gast"]].copy()
 spiele_filter["Heimteam"] = spiele_filter["Heim"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Gästeteam"] = spiele_filter["Gast"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Spiel"] = "(" + spiele_filter["SID"].astype(str) + ") " + spiele_filter["Heimteam"] + ' - ' + spiele_filter["Gästeteam"]
 
-# Grafik
+# Selectbox Spiele
 game_filter = st.selectbox("Spiel auswählen", spiele_filter["Spiel"].unique())
 game = spiele_filter.loc[spiele_filter["Spiel"]==game_filter, "SID"].values[0]
 
+# Spieler-Filter erstellen
+spieler_filter = spieler.copy()
+spieler_filter["Nachname"] = spieler_filter["Nachname"].str.replace(r"\s[A-Z]\.$", "", regex=True)
+spieler_filter["Name"] = spieler_filter["Vorname"] + " " + spieler_filter["Nachname"]
+
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -43,8 +83,8 @@ date = spiele.loc[spiele["SID"]==game, "Datum"].iloc[0]
 date = date.strftime("%d.%m.%Y")
 
 # Heim- und Auswärtsteam splitten
-df_h = df_new[(df_new["SID"] == game) & (df_new["HG"] == "H")].copy()
-df_a = df_new[(df_new["SID"] == game) & (df_new["HG"] == "G")].copy()
+df_h = abschlüsse[(abschlüsse["SID"] == game) & (abschlüsse["HG"] == "H")].copy()
+df_a = abschlüsse[(abschlüsse["SID"] == game) & (abschlüsse["HG"] == "G")].copy()
 # Auswärtskoordianten spiegeln
 df_a[["yFe", "xFe"]] *= -1
 
@@ -162,7 +202,7 @@ else:
     gMin_a_2 = []
     gMin_a_2.extend(df_a_2.loc[df_a_2["Ergeb"].isin(["Tor", "ET"]), "Min"].tolist())
 
-    df_goals = df_new[(df_new["SID"] == game) & df_new["Ergeb"].isin(["Tor", "ET"])].copy()
+    df_goals = abschlüsse[(abschlüsse["SID"] == game) & abschlüsse["Ergeb"].isin(["Tor", "ET"])].copy()
 
     df_goals = df_goals.merge(
         teams[["TID", "Vereinsname"]],
@@ -191,7 +231,7 @@ else:
     df_goals = df_goals.rename(columns={"Schütze": "Spieler"})
 
     df_goals["Entstehung"] = "Regulär"
-    df_goals.loc[df_goals["Phase"]=="Elfmeter", "Entstehung"] = "11M"
+    df_goals.loc[df_goals["Spielphase"]=="Elfmeter", "Entstehung"] = "11M"
     df_goals.loc[df_goals["Ergeb"]=="ET", "Entstehung"] = "ET"
 
     df_goals = df_goals[["Min", "Ereignis", "Spieler", "xG", "Entstehung", "Vorlage", "Vereinsname"]].copy()
@@ -249,7 +289,7 @@ else:
     m_xp_h = (m_p_h_win * 3) + (m_p_h_draw * 1) + (m_p_h_loss * 0)
     m_xp_a = (m_p_h_win * 0) + (m_p_h_draw * 1) + (m_p_h_loss * 3)
 
-    # === AUSGABE ===
+    # ========== SPIEL-AUSGABE ==========
     #GridSpec initialisieren
     import matplotlib.gridspec as gridspec
     from matplotlib.colors import to_rgba
@@ -391,26 +431,69 @@ else:
 
     st.pyplot(fig)
 
-# === METRIKEN ===
-st.subheader("Metriken")
+# ========== SPIELER-METRIKEN ==========
+st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
+col1, col2 = st.columns([1, 3])
+with col1:
+    st.subheader("Metriken")
+with col2:
+    st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
+    with st.expander("Weitere Filter"):
+        gs = st.multiselect("GameState", ["<-2", "-2", "-1", "0", "1", "2", ">2"], default=["<-2", "-2", "-1", "0", "1", "2", ">2"])
+        ps = st.multiselect("PlayerState", ["<-1", "-1", "0", "1", ">1"], default=["<-1", "-1", "0", "1", ">1"])
+        st.markdown("Achtung: Bei Filterung nach GameState und PlayerState wird die Spielzeit nicht an diese angepasst!")
+
+abschlüsse["gs_filt"] = abschlüsse["GS"].astype(str)
+abschlüsse.loc[abschlüsse["GS"] > 2, "gs_filt"] = ">2"
+abschlüsse.loc[abschlüsse["GS"] < -2, "gs_filt"] = "<-2"
+
+abschlüsse["ps_filt"] = abschlüsse["PR"].astype(str)
+abschlüsse.loc[abschlüsse["PR"] > 1, "ps_filt"] = ">1"
+abschlüsse.loc[abschlüsse["PR"] < -1, "ps_filt"] = "<-1"
 
 col1, col2 = st.columns(2)
-
 with col1:
     start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), value=[1, spiele["SID"].max()])
 with col2:
-    modus = st.radio("",["Absolut", "Pro 80 Minuten"], horizontal=True)
+    if set(gs) == set(["<-2", "-2", "-1", "0", "1", "2", ">2"]) and set(ps) == set(["<-1", "-1", "0", "1", ">1"]):
+        modus = st.radio("",["Absolut", "Pro 80 Minuten"], horizontal=True)
+    else:
+        modus = st.radio("",["Absolut"], horizontal=True)
+
+phase = st.multiselect("Spielphase", ['Eigener Ballbesitz', 'Umschalten Offensiv', 'Ecke', 'Freistoss', 'Elfmeter'], 
+default=['Eigener Ballbesitz', 'Umschalten Offensiv', 'Ecke', 'Freistoss', 'Elfmeter'])
+
+# Positionen filtern
+position_map = {
+    "Tor": "TW",
+    "Abwehr": "AB",
+    "Mittelfeld": "MF",
+    "Sturm": "ST"
+}
 
 spiele = spiele[spiele["SID"].between(start, end)].copy()
-abschlüsse = df_new[df_new["SID"].between(start, end)].copy()
+abschlüsse = abschlüsse[abschlüsse["SID"].between(start, end)].copy()
 spielzeiten = spielzeiten[spielzeiten["SID"].between(start, end)].copy()
 karten = karten[karten["SID"].between(start, end)].copy()
+
+# Maximale Spielzeit berechnen
+spielzeit_max = spiele["1. HZ"].sum() + spiele["2. HZ"].sum()
+
+col1, col2 = st.columns([2, 1])
+with col1:
+    position = st.multiselect("Position", options=list(position_map.keys()), default=list(position_map.keys()))
+with col2:
+    min_spielzeit = st.number_input("Mindestspielzeit", min_value=0, max_value=spielzeit_max, value=0)
+
+gefilterte_positionen = [position_map[a] for a in position]
+
+abschlüsse = abschlüsse[abschlüsse["gs_filt"].isin(gs)]
+abschlüsse = abschlüsse[abschlüsse["ps_filt"].isin(ps)]
+abschlüsse = abschlüsse[abschlüsse["Spielphase"].isin(phase)]
 
 startelf = (spielzeiten[spielzeiten["1Von"] == 1].copy())["Nr"].value_counts().reset_index(name="Startelf")
 spieler = spieler.merge(startelf, on="Nr", how="left")
 spieler["Startelf"] = spieler["Startelf"].fillna(0).astype(int)
-
-spielzeit_max = spiele["1. HZ"].sum() + spiele["2. HZ"].sum()
 
 spielzeit_sum = (spielzeiten.groupby("Nr", as_index=False).agg(Spielzeit=("SZ", "sum")))
 spieler = spieler.merge(spielzeit_sum, on="Nr", how="left")
@@ -433,6 +516,18 @@ tore_pro_spieler = tore["SNr"].value_counts().reset_index()
 tore_pro_spieler.columns = ["Nr", "Tore"]
 spieler = spieler.merge(tore_pro_spieler, on="Nr", how="left")
 spieler["Tore"] = (spieler["Tore"].fillna(0).round(2)).astype(int)
+
+aufstor = abschlüsse[abschlüsse["Ergeb"].isin(["Tor", "Save", "TLK"])].copy()
+
+aufstor_pro_spieler = aufstor["SNr"].value_counts().reset_index()
+aufstor_pro_spieler.columns = ["Nr", "Aufs Tor"]
+spieler = spieler.merge(aufstor_pro_spieler, on="Nr", how="left")
+spieler["Aufs Tor"] = (spieler["Aufs Tor"].fillna(0).round(2)).astype(int)
+
+schlüsselpässe_pro_spieler = abschlüsse["VNr"].value_counts().reset_index()
+schlüsselpässe_pro_spieler.columns = ["Nr", "Schlüsselpässe"]
+spieler = spieler.merge(schlüsselpässe_pro_spieler, on="Nr", how="left")
+spieler["Schlüsselpässe"] = (spieler["Schlüsselpässe"].fillna(0).round(2)).astype(int)
 
 vorlagen_pro_spieler = tore["VNr"].value_counts().reset_index()
 vorlagen_pro_spieler.columns = ["Nr", "Vorlagen"]
@@ -568,17 +663,19 @@ xga_imp = xga_imp[["Nr", "xGAImpact"]].sort_values("Nr").reset_index(drop=True)
 
 spieler = (spieler.merge(xg_imp, on="Nr", how="left").merge(xga_imp, on="Nr", how="left"))
 spieler[["xGImpact", "xGAImpact"]] = spieler[["xGImpact", "xGAImpact"]].round(2)
-spieler["xPlusMinus"] = spieler["xGImpact"]-spieler["xGAImpact"]
+spieler["xPlusMinus"] = (spieler["xGImpact"]-spieler["xGAImpact"]).round(2)
 
-spieler = spieler[['Nr', 'Vorname', 'Nachname', 'Startelf', 'Spielzeit', 'Spielzeitanteil', 
-                   'Schüsse', 'Tore', 'xG', 'Effizienz', 'Vorlagen', 'xA',
+spieler = spieler[['Nr', 'Vorname', 'Nachname', 'Position', 'Startelf', 'Spielzeit', 'Spielzeitanteil', 
+                   'Schüsse', 'Aufs Tor', 'Tore', 'xG', 'Effizienz', 'Schlüsselpässe', 'Vorlagen', 'xA',
                    'xGChain', 'xGBuildup', 'xGImpact', 'xGAImpact', 'xPlusMinus']]
 
 if modus == "Pro 80 Minuten":
     spieler["Schüsse"] = ((spieler["Schüsse"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Aufs Tor"] = ((spieler["Aufs Tor"]/spieler["Spielzeit"])*80).round(2)
     spieler["Tore"] = ((spieler["Tore"]/spieler["Spielzeit"])*80).round(2)
     spieler["xG"] = ((spieler["xG"]/spieler["Spielzeit"])*80).round(2)
     spieler["Effizienz"] = ((spieler["Effizienz"]/spieler["Spielzeit"])*80).round(2)
+    spieler["Schlüsselpässe"] = ((spieler["Schlüsselpässe"]/spieler["Spielzeit"])*80).round(2)
     spieler["Vorlagen"] = ((spieler["Vorlagen"]/spieler["Spielzeit"])*80).round(2)
     spieler["xA"] = ((spieler["xA"]/spieler["Spielzeit"])*80).round(2)
     spieler["xGChain"] = ((spieler["xGChain"]/spieler["Spielzeit"])*80).round(2)
@@ -587,22 +684,54 @@ if modus == "Pro 80 Minuten":
     spieler["xGAImpact"] = ((spieler["xGAImpact"]/spieler["Spielzeit"])*80).round(2)
     spieler["xPlusMinus"] = ((spieler["xPlusMinus"]/spieler["Spielzeit"])*80).round(2)
 
-st.dataframe(spieler, hide_index=True)
+spieler_gefiltert = spieler[(spieler["Position"].isin(gefilterte_positionen)) & (spieler["Spielzeit"]>=min_spielzeit)]
 
-# === Spiel-Übersicht ===
-modus = st.radio("",["Gesamt", "Heim", "Auswärts"], horizontal=True)
+# Gesamt-Zeile erstellen
+spalten = ["Schüsse", "Aufs Tor", "Tore", "xG", "Schlüsselpässe", "Vorlagen", "xA"]
+sum_row = spieler_gefiltert[spalten].sum()
+sum_row["Nr"] = 0
+sum_row["Vorname"] = "-"
+sum_row["Nachname"] = "Gesamt"
+sum_row["Position"] = "-"
+sum_row["Startelf"] = spiele["SID"].max()
+sum_row["Spielzeit"] = spiele["1. HZ"].sum()+spiele["2. HZ"].sum()
+sum_row["Spielzeitanteil"] = 100
+sum_row["Effizienz"] = sum_row["Tore"]-sum_row["xG"]
+sum_row["xGChain"] = "-"
+sum_row["xGBuildup"] = "-"
+sum_row["xGImpact"] = "-"
+sum_row["xGAImpact"] = "-"
+sum_row["xPlusMinus"] = "-"
+
+spieler_gesamt = pd.concat([spieler_gefiltert, sum_row.to_frame().T], ignore_index=True)
+
+st.dataframe(spieler_gesamt, hide_index=True)
+
+# Spieler mit dem höchsten xG-Wert
+max_xG =int(spieler.loc[spieler["xG"] == spieler["xG"].max(), "Nr"].values[0])
+
+# ========== SPIEL-ÜBERSICHT ==========
+st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1, 2])
+with col1:
+    st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
+    st.subheader("Spiele")
+with col2:
+    modus2 = st.radio("", ["Gesamt", "Heim", "Auswärts"], horizontal=True)
 
 xG_end = abschlüsse.groupby(["SID", "HG"], as_index=False)["xGAP"].sum().rename(columns={"xGAP": "xG"})
 
 xg_h = xG_end[xG_end["HG"] == "H"].rename(columns={"xG": "xGH"})
 xg_a = xG_end[xG_end["HG"] == "G"].rename(columns={"xG": "xGG"})
 
-spiele = (spiele.merge(xg_h[["SID", "xGH"]], on="SID", how="left").merge(xg_a[["SID", "xGG"]], on="SID", how="left"))
+spiele_üb = spiele.copy()
+spiele_üb = (spiele_üb.merge(xg_h[["SID", "xGH"]], on="SID", how="left").merge(xg_a[["SID", "xGG"]], on="SID", how="left"))
 
 xPH_list = []
 xPG_list = []
 
-for _, row in spiele.iterrows():
+for _, row in spiele_üb.iterrows():
     lam_h = row["xGH"]
     lam_a = row["xGG"]
 
@@ -621,13 +750,13 @@ for _, row in spiele.iterrows():
     xPH_list.append(xp_h)
     xPG_list.append(xp_a)
 
-spiele["xPH"] = xPH_list
-spiele["xPG"] = xPG_list
+spiele_üb["xPH"] = xPH_list
+spiele_üb["xPG"] = xPG_list
 
-spiele[['xGH', 'xGG', 'xPH', 'xPG']] = spiele[['xGH', 'xGG', 'xPH', 'xPG']].round(2)
+spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']] = spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']].round(2)
 
-heim = spiele[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']].copy()
-gast = spiele[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']].copy()
+heim = spiele_üb[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']].copy()
+gast = spiele_üb[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']].copy()
 
 heim["HG"] = "H"
 gast["HG"] = "G"
@@ -635,18 +764,127 @@ gast["HG"] = "G"
 heim = heim.rename(columns={"Heim": "Team", "TH": "Tore", "PH": "Punkte", "xGH": "xG", "xPH": "xPoints"})
 gast = gast.rename(columns={"Gast": "Team", "TG": "Tore", "PG": "Punkte", "xGG": "xG", "xPG": "xPoints"})
 
-spiele = pd.concat([heim, gast], ignore_index=True)
-spiele = spiele[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']].sort_values(["SID", "HG"], ascending=[True, False])
+spiele_üb = pd.concat([heim, gast], ignore_index=True)
+spiele_üb = spiele_üb[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']].sort_values(["SID", "HG"], ascending=[True, False])
 
-fcn = spiele[spiele["Team"]=="FCN"][spiele["SID"].between(start, end)].copy()
-opp = spiele[spiele["Team"]!="FCN"][spiele["SID"].between(start, end)].copy()
+fcn = spiele_üb[spiele_üb["Team"]=="FCN"][spiele_üb["SID"].between(start, end)].copy()
+opp = spiele_üb[spiele_üb["Team"]!="FCN"][spiele_üb["SID"].between(start, end)].copy()
 
-col1, col2, col3 = st.columns(3)
+if modus2 == "Heim":
+    fcn = fcn[fcn["HG"]=="H"].copy()
+    opp = opp[opp["HG"]=="G"].copy()
+elif modus2 == "Auswärts":
+    fcn = fcn[fcn["HG"]=="G"].copy()
+    opp = opp[opp["HG"]=="H"].copy()
 
-with col1:
-    st.markdown(f"Punkte: {int(fcn["Punkte"].sum())} ({float(fcn["xPoints"].sum().round(2))})")
+if abschlüsse.empty:
+    st.error("Aktuell sind keine Abschlüsse ausgewählt!")
+else:
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"Punkte: {int(fcn["Punkte"].sum())} ({float(fcn["xPoints"].sum().round(2))})")
+    with col2:
+        st.markdown(f"Tore: {int(fcn["Tore"].sum())} ({float(fcn["xG"].sum().round(2))})")
+    with col3:
+        st.markdown(f"Gegentore: {int(opp["Tore"].sum())} ({float(opp["xG"].sum().round(2))})")
+
+
+# ========== SPIELER-MAP ==========
+st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
+st.subheader("Einzelspieler")
+
+# Selectbox Spieler
+optionen = spieler_filter["Name"].unique().tolist()
+optionen.insert(0, "Alle Spieler")
+player_max_xG = spieler_filter.loc[spieler_filter["Nr"]==max_xG, "Name"].values[0]
+default_index = optionen.index(player_max_xG)
+
+col1, col2 = st.columns(2)
+with col1: 
+    player_filter = st.selectbox("Spieler auswählen", options=optionen, index=0)
+    schussart = st.multiselect("Schussart", ['Links', 'Rechts', 'Kopf', 'Sonstige'], default=['Links', 'Rechts', 'Kopf', 'Sonstige'])
 with col2:
-    st.markdown(f"Tore: {int(fcn["Tore"].sum())} ({float(fcn["xG"].sum().round(2))})")
-with col3:
+    vorbereitung = st.multiselect("Vorbereitungsart", ['Tiefer Pass', 'Flache Hereingabe', 'Hohe Flanke', 'Dribbling',  'Direkter Standard', 'Sonstige'], 
+        default=['Tiefer Pass', 'Flache Hereingabe', 'Hohe Flanke', 'Dribbling',  'Direkter Standard', 'Sonstige'])
 
-    st.markdown(f"Gegentore: {int(opp["Tore"].sum())} ({float(opp["xG"].sum().round(2))})")
+if player_filter == "Alle Spieler":
+    einzelspieler = abschlüsse[abschlüsse["TID"]=="FCN"].copy()
+    minuten = spielzeit_max
+else:
+    player = spieler_filter.loc[spieler_filter["Name"]==player_filter, "Nr"].values[0]
+    einzelspieler = abschlüsse[abschlüsse["SNr"]==player].copy()
+    minuten = int(spieler.loc[spieler["Nr"]==player, "Spielzeit"].values[0])
+
+einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
+einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
+
+#if modus2 == "Heim":
+#    einzelspieler = einzelspieler[einzelspieler["HG"]=="H"].copy()
+#elif modus2 == "Auswärts":
+#    einzelspieler = einzelspieler[einzelspieler["HG"]=="G"].copy()
+
+einzelspieler_np = einzelspieler[einzelspieler["Spielphase"]!="Elfmeter"].copy()
+einzelspieler_p = einzelspieler[einzelspieler["Spielphase"]=="Elfmeter"].copy()
+
+# non-penalty
+xG_spieler = float(einzelspieler_np["xG"].sum().round(2))
+tore_spieler = int((einzelspieler_np["Ergeb"]=="Tor").sum())
+schüsse_spieler = int(einzelspieler_np["Ergeb"].notnull().sum())
+
+# penalty
+xG_spieler_p = float(einzelspieler_p["xG"].sum().round(2))
+tore_spieler_p = int((einzelspieler_p["Ergeb"]=="Tor").sum())
+schüsse_spieler_p = int(einzelspieler_p["Ergeb"].notnull().sum())
+
+if schüsse_spieler > 0:
+    xg_pro_schuss = round((xG_spieler/schüsse_spieler), 2)
+else:
+    xg_pro_schuss = "-"
+
+fig = plt.figure(figsize=(14, 12), constrained_layout=True)
+fig.set_facecolor(background_color)
+
+gs = fig.add_gridspec(nrows = 6, ncols = 4)
+
+ax1 = fig.add_subplot(gs[0,0:4])
+ax2 = fig.add_subplot(gs[1:6,0:4])
+
+pitch = VerticalPitch(
+    pitch_type='skillcorner', half=True, pitch_length=105, pitch_width=68,
+    axis=False, label=False, tick=False,
+    pad_left=3, pad_right=3, pad_top=3, pad_bottom=0.1,
+    pitch_color=background_color, line_color=text_color,
+    stripe=False, linewidth=1, corner_arcs=True, goal_type="box"
+)
+pitch.draw(ax=ax2)
+
+for i in einzelspieler.to_dict(orient="records"):
+            pitch.scatter(
+                i["yFe"],
+                i["xFe"],
+                marker = '*' if i["Ergeb"] == "Tor" else 'o',
+                s = np.sqrt(i["xG"]) * 800 * (3 if i["Ergeb"] == "Tor" else 1),
+                facecolors=to_rgba("#AA1124", 0.5),
+                edgecolors=to_rgba("#AA1124", 1),
+                linewidth = 1.5,
+                zorder = 2,
+                ax = ax2)
+
+ax1.text(0.07, 0.7, player_filter, 
+         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=30, alpha=1, zorder=1)
+ax1.text(0.07, 0.4, f"{minuten} (von {spielzeit_max}) Minuten gespielt", 
+         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
+ax1.text(0.07, 0.2, "U17 Bayernliga 2025/26", 
+         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
+ax1.text(0.93, 0.7, f"xG: {xG_spieler} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
+         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=30, alpha=1, zorder=1)
+ax1.text(0.93, 0.4, f"+{xG_spieler_p} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
+         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
+ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}", 
+         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
+
+ax1.set_facecolor(background_color)
+ax1.axis("off")
+
+st.pyplot(fig)
