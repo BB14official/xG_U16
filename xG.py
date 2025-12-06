@@ -15,12 +15,12 @@ st.title("1. FC Nürnberg U16")
 st.subheader("Expected Goals 2025/26")
 
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("xG/abschlüsse_xG.csv")
-teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("abschlüsse_xG.csv")
+teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Spielphasen ersetzen
 abschlüsse["Spielphase"] = abschlüsse["Spielphase"].replace({
@@ -73,7 +73,7 @@ spieler_filter["Nachname"] = spieler_filter["Nachname"].str.replace(r"\s[A-Z]\.$
 spieler_filter["Name"] = spieler_filter["Vorname"] + " " + spieler_filter["Nachname"]
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
 
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
@@ -881,5 +881,6 @@ ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}",
 
 ax1.set_facecolor(background_color)
 ax1.axis("off")
+
 
 st.pyplot(fig)
