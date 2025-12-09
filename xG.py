@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -318,7 +318,7 @@ else:
             f"{'   ' + x['Spieler'] if pd.notna(x['Spieler']) else ''}"  # Schütze (falls vorhanden)
             f"{', ' + x['Vorlage'] if pd.notna(x['Vorlage']) else ''}"  # Vorlage (falls vorhanden)
             f"{'   (' + x['Entstehung'] + ')' if x['Entstehung'] != 'Regulär' else ''}"  # Entstehung (nur wenn ≠ Regulär)
-            f"{'   ' + format(x['xG']*100, '.0f') + '%' if x['xG'] != 0 else ''}"  # xG-Wert
+            f"{'   ' + format(x['xG']*100, '.0f') + '%' if x['xG'] not in [0, None] and not pd.isna(x['xG']) else ''}"  # xG-Wert
         ),
         axis=1
     )
@@ -494,13 +494,12 @@ with col2:
 
 col1, col2 = st.columns(2)
 with col1:
-    start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), value=st.session_state.start_end, key="start_end")
+    start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), key="start_end")
 with col2:
     heimauswärts = st.radio("", ["Gesamt", "Heim", "Auswärts"], key="heimauswärts", horizontal=True)
 
 spiele = spiele[spiele["SID"].between(start, end)].copy()
 abschlüsse = abschlüsse[abschlüsse["SID"].between(start, end)].copy()
-spielzeiten = spielzeiten[spielzeiten["SID"].between(start, end)].copy()
 karten = karten[karten["SID"].between(start, end)].copy()
 spiele_üb = spiele_üb[spiele_üb["SID"].between(start, end)].copy()
 
@@ -510,18 +509,173 @@ ergebnisse_opp = spiele_üb[spiele_üb["Team"]!="FCN"].copy()
 abschlüsse_fcn = abschlüsse[abschlüsse["TID"]=="FCN"].copy()
 abschlüsse_opp = abschlüsse[abschlüsse["TID"]!="FCN"].copy()
 
+# -------------------------------------------------- Vorbereitungen xPLusMinus & Spielzeiten --------------------------------------------------
+# Hilfsspalten erstellen
+nummern = spieler["Nr"].unique()
+
+def player_on_pitch_h1(df_abschlüsse, df_spielzeiten, nummern):
+    for i in nummern:
+        df_abschlüsse[f"Sp{i}"] = False  # Spalte anlegen
+
+        # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten hat
+        if i in df_spielzeiten["Nr"].values:
+            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", "1Von", "1Bis"]].dropna()
+            
+            if not zeiten.empty:
+                for _, row in zeiten.iterrows():
+                    sid = row["SID"]
+                    von = row["1Von"]
+                    bis = row["1Bis"]
+                    
+                    # Maske anwenden
+                    mask = (df_abschlüsse["SID"] == sid) & (df_abschlüsse["Min"].between(von, bis))
+                    df_abschlüsse.loc[mask, f"Sp{i}"] = True
+
+def player_on_pitch_h2(df_abschlüsse, df_spielzeiten, nummern):
+    for i in nummern:
+        df_abschlüsse[f"Sp{i}"] = False  # Spalte anlegen
+
+        # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten hat
+        if i in df_spielzeiten["Nr"].values:
+            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", "2Von", "2Bis"]].dropna()
+            
+            if not zeiten.empty:
+                for _, row in zeiten.iterrows():
+                    sid = row["SID"]
+                    von = row["2Von"]
+                    bis = row["2Bis"]
+                    
+                    # Maske anwenden
+                    mask = (df_abschlüsse["SID"] == sid) & (df_abschlüsse["Min"].between(von, bis))
+                    df_abschlüsse.loc[mask, f"Sp{i}"] = True
+
+# Für jede Halbzeit je eine Minutenliste erzeugen
+spiele["min_HZ1"] = spiele.apply(lambda r: list(range(1, r["1. HZ"] + 1)), axis=1)
+spiele["min_HZ2"] = spiele.apply(lambda r: list(range(41, 40 + r["2. HZ"] + 1)), axis=1)
+
+# DataFrames für beide Halbzeiten bauen
+df_hz1 = spiele[["SID", "min_HZ1"]].explode("min_HZ1")
+df_hz1["HZ"] = 1
+df_hz1 = df_hz1.rename(columns={"min_HZ1": "Min"})
+
+df_hz2 = spiele[["SID", "min_HZ2"]].explode("min_HZ2")
+df_hz2["HZ"] = 2
+df_hz2 = df_hz2.rename(columns={"min_HZ2": "Min"})
+
+# Beide zusammenfügen
+df_minuten = pd.concat([df_hz1, df_hz2], ignore_index=True)
+spiele.drop(["min_HZ1", "min_HZ2"], axis=1, inplace=True)
+
+df_minuten["HG"] = df_minuten["SID"].isin(heimspiele).map({True: "H", False: "G"})
+
+df_minuten_h1 = df_minuten[df_minuten["HZ"]==1].copy()
+df_minuten_h2 = df_minuten[df_minuten["HZ"]==2].copy()
+
+player_on_pitch_h1(df_minuten_h1, spielzeiten, nummern)
+player_on_pitch_h2(df_minuten_h2, spielzeiten, nummern)
+
+df_minuten = pd.concat([df_minuten_h1, df_minuten_h2], ignore_index=True)
+df_minuten = df_minuten.sort_values(by=["SID", "HZ", "Min"], ascending=[True, True, True]).reset_index(drop=True)
+
+tore_fcn = abschlüsse_fcn[abschlüsse_fcn["Ergeb"].isin(["Tor", "ET"])].copy()
+tore_opp = abschlüsse_opp[abschlüsse_opp["Ergeb"].isin(["Tor", "ET"])].copy()
+
+tore = pd.concat([tore_fcn, tore_opp], ignore_index=True)
+tore = tore.sort_values(by=["SID", "HZ", "Min", "AP"], ascending=[True, True, True, True]).reset_index(drop=True)
+
+def compute_gamestate(df_minuten, df_tore, team="FCN"):
+    # GS initialisieren
+    df_minuten["GameState"] = 0
+
+    # Tore sortieren nach SID, HZ und Min
+    df_tore_sorted = df_tore.sort_values(["SID", "HZ", "Min"])
+
+    # Schleife über jedes Spiel (SID) und jede Halbzeit (HZ)
+    for sid in df_minuten["SID"].unique():
+        gs = 0 # Startwert GS pro Spiel
+        for hz in sorted(df_minuten["HZ"].unique()):
+            df_game_hz = df_minuten[(df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)].sort_values("Min").reset_index()
+            
+            gs_list = []
+
+            for idx, row in df_game_hz.iterrows():
+                current_min = row["Min"]
+                prev_min = current_min - 1
+
+                # Tore in derselben SID, HZ und vorherigen Minute
+                tore_prev = df_tore_sorted[
+                    (df_tore_sorted["SID"] == sid) &
+                    (df_tore_sorted["HZ"] == hz) &
+                    (df_tore_sorted["Min"] == prev_min)
+                ]
+
+                for _, t_row in tore_prev.iterrows():
+                    if t_row["TID"] == team:
+                        gs += 1
+                    else:
+                        gs -= 1
+
+                gs_list.append(gs)
+
+            # Ergebnis ins df_minuten übernehmen
+            mask = (df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)
+            df_minuten.loc[mask, "GameState"] = gs_list
+
+def compute_playerstate(df_minuten, df_karten, team="FCN"):
+    # PS initialisieren
+    df_minuten["PlayerState"] = 0
+
+    # Karten sortieren nach SID, HZ und Min
+    df_karten_sorted = df_karten.sort_values(["SID", "HZ", "Min"])
+
+    # Schleife über jedes Spiel (SID) und jede Halbzeit (HZ)
+    for sid in df_minuten["SID"].unique():
+        ps = 0 # Startwert GS pro Spiel
+        for hz in sorted(df_minuten["HZ"].unique()):
+            df_game_hz = df_minuten[(df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)].sort_values("Min").reset_index()
+            
+            ps_list = []
+
+            for idx, row in df_game_hz.iterrows():
+                current_min = row["Min"]
+
+                # Karten in derselben SID, HZ und vorherigen Minute
+                karten_min = df_karten_sorted[
+                    (df_karten_sorted["SID"] == sid) &
+                    (df_karten_sorted["HZ"] == hz) &
+                    (df_karten_sorted["Min"] == current_min)
+                ]
+
+                for _, t_row in karten_min.iterrows():
+                    if t_row["Team"] == team:
+                        ps -= 1
+                    else:
+                        ps += 1
+
+                ps_list.append(ps)
+
+            # Ergebnis ins df_minuten übernehmen
+            mask = (df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)
+            df_minuten.loc[mask, "PlayerState"] = ps_list
+
+compute_gamestate(df_minuten, tore, team="FCN")
+compute_playerstate(df_minuten, karten, team="FCN")
+
+df_minuten = df_minuten[df_minuten["SID"].between(start, end)].copy()
+
+# -------------------------------------------------- Filter Heim / Auswärts --------------------------------------------------
 if heimauswärts == "Heim":
     ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="H"].copy()
     ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="G"].copy()
     abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="H"].copy()
     abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="G"].copy()
-    spielzeiten = spielzeiten[spielzeiten["SID"].isin(heimspiele)]
+    df_minuten = df_minuten[df_minuten["SID"].isin(heimspiele)]
 elif heimauswärts == "Auswärts":
     ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="G"].copy()
     ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="H"].copy()
     abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="G"].copy()
     abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="H"].copy()
-    spielzeiten = spielzeiten[spielzeiten["SID"].isin(auswärtsspiele)]
+    df_minuten = df_minuten[df_minuten["SID"].isin(auswärtsspiele)]
 
 if abschlüsse_fcn.empty and abschlüsse_opp.empty:
     st.error("Aktuell sind keine Abschlüsse ausgewählt!")
@@ -591,46 +745,59 @@ with col2:
     with st.expander("Weitere Filter"):
         gs = st.multiselect("GameState", options_gs, default=st.session_state.gs, key="gs")
         ps = st.multiselect("PlayerState", options_ps, default=st.session_state.ps, key="ps")
-        st.markdown("Achtung: Bei Filterung nach GameState und PlayerState wird die Spielzeit nicht an diese angepasst!")
 
 abschlüsse_fcn["gs_filt"] = abschlüsse_fcn["GS"].astype(str)
 abschlüsse_fcn.loc[abschlüsse_fcn["GS"] > 2, "gs_filt"] = ">2"
 abschlüsse_fcn.loc[abschlüsse_fcn["GS"] < -2, "gs_filt"] = "<-2"
 
+df_minuten["gs_filt"] = df_minuten["GameState"].astype(str)
+df_minuten.loc[df_minuten["GameState"] > 2, "gs_filt"] = ">2"
+df_minuten.loc[df_minuten["GameState"] < -2, "gs_filt"] = "<-2"
+
 abschlüsse_fcn["ps_filt"] = abschlüsse_fcn["PR"].astype(str)
 abschlüsse_fcn.loc[abschlüsse_fcn["PR"] > 1, "ps_filt"] = ">1"
 abschlüsse_fcn.loc[abschlüsse_fcn["PR"] < -1, "ps_filt"] = "<-1"
 
+df_minuten["ps_filt"] = df_minuten["PlayerState"].astype(str)
+df_minuten.loc[df_minuten["PlayerState"] > 1, "ps_filt"] = ">1"
+df_minuten.loc[df_minuten["PlayerState"] < -1, "ps_filt"] = "<-1"
+
 phase = st.multiselect("Spielphase", options_phase, default=st.session_state.phase, key="phase")
+
+abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["gs_filt"].isin(gs)]
+df_minuten = df_minuten[df_minuten["gs_filt"].isin(gs)]
+abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["ps_filt"].isin(ps)]
+df_minuten = df_minuten[df_minuten["ps_filt"].isin(ps)]
+abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["Spielphase"].isin(phase)]
 
 # Maximale Spielzeit berechnen
 if heimauswärts == "Heim":
-    spielzeit_max = spiele[spiele["SID"].isin(heimspiele)]["1. HZ"].sum() + spiele[spiele["SID"].isin(heimspiele)]["2. HZ"].sum()
+    spielzeit_max = (df_minuten["HG"]=="H").sum()
 elif heimauswärts == "Auswärts":
-    spielzeit_max = spiele[spiele["SID"].isin(auswärtsspiele)]["1. HZ"].sum() + spiele[spiele["SID"].isin(auswärtsspiele)]["2. HZ"].sum()
+    spielzeit_max = (df_minuten["HG"]=="G").sum()
 else:
-    spielzeit_max = spiele["1. HZ"].sum() + spiele["2. HZ"].sum()
+    spielzeit_max = len(df_minuten)
+
+default_min_spielzeit = st.session_state.get("min_spielzeit", 0)
+default_min_spielzeit = min(default_min_spielzeit, spielzeit_max)
 
 col1, col2 = st.columns([2, 1])
 with col1:
     position = st.multiselect("Position", options=options_position, default=st.session_state.position, key="position")
 with col2:
-    min_spielzeit = st.number_input("Mindestspielzeit", min_value=0, max_value=spielzeit_max, value=st.session_state.min_spielzeit, key="min_spielzeit")
+    min_spielzeit = st.number_input("Mindestspielzeit", min_value=0, max_value=spielzeit_max, value=default_min_spielzeit, key="min_spielzeit")
 
 gefilterte_positionen = [position_map[a] for a in position]
-
-abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["gs_filt"].isin(gs)]
-abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["ps_filt"].isin(ps)]
-abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["Spielphase"].isin(phase)]
 
 # -------------------------------------------------- Metriken berechnen --------------------------------------------------
 startelf = (spielzeiten[spielzeiten["1Von"] == 1].copy())["Nr"].value_counts().reset_index(name="Startelf")
 spieler = spieler.merge(startelf, on="Nr", how="left")
 spieler["Startelf"] = spieler["Startelf"].fillna(0).astype(int)
 
-spielzeit_sum = (spielzeiten.groupby("Nr", as_index=False).agg(Spielzeit=("SZ", "sum")))
-spieler = spieler.merge(spielzeit_sum, on="Nr", how="left")
-spieler["Spielzeit"] = spieler["Spielzeit"].fillna(0).astype(int)
+# Spielzeit pro Spieler berechnen
+spielzeiten_dict = {i: df_minuten[f"Sp{i}"].sum() for i in nummern}
+spielzeiten_es = pd.DataFrame(list(spielzeiten_dict.items()), columns=["Nr", "Spielzeit"])
+spieler = spieler.merge(spielzeiten_es, on="Nr", how="left")
 
 spieler["Spielzeitanteil"] = ((spieler["Spielzeit"]/spielzeit_max).round(2)*100).fillna(0).astype(int)
 
@@ -719,31 +886,14 @@ abschlüsse_fcn_2 = abschlüsse_fcn[abschlüsse_fcn["HZ"] == 2].copy()
 abschlüsse_opp_1 = abschlüsse_opp[abschlüsse_opp["HZ"] == 1].copy()
 abschlüsse_opp_2 = abschlüsse_opp[abschlüsse_opp["HZ"] == 2].copy()
 
-# Hilfsspalten erstellen
-nummern = spieler["Nr"].unique()
+dfs_h1 = [abschlüsse_fcn_1, abschlüsse_opp_1]
+dfs_h2 = [abschlüsse_fcn_2, abschlüsse_opp_2]
 
-def player_on_pitch(df_abschlüsse, df_spielzeiten, nummern):
-    for i in nummern:
-        df_abschlüsse[f"Sp{i}"] = False  # Spalte anlegen
+for df in dfs_h1:
+    player_on_pitch_h1(df, spielzeiten, nummern)
 
-        # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten hat
-        if i in df_spielzeiten["Nr"].values:
-            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", "1Von", "1Bis"]].dropna()
-            
-            if not zeiten.empty:
-                for _, row in zeiten.iterrows():
-                    sid = row["SID"]
-                    von = row["1Von"]
-                    bis = row["1Bis"]
-                    
-                    # Maske anwenden
-                    mask = (df_abschlüsse["SID"] == sid) & (df_abschlüsse["Min"].between(von, bis))
-                    df_abschlüsse.loc[mask, f"Sp{i}"] = True
-
-dfs = [abschlüsse_fcn_1, abschlüsse_fcn_2, abschlüsse_opp_1, abschlüsse_opp_2]
-
-for df in dfs:
-    player_on_pitch(df, spielzeiten, nummern)
+for df in dfs_h2:
+    player_on_pitch_h2(df, spielzeiten, nummern)
 
 abschlüsse_fcn = pd.concat([abschlüsse_fcn_1, abschlüsse_fcn_2], ignore_index=True)
 abschlüsse_opp = pd.concat([abschlüsse_opp_1, abschlüsse_opp_2], ignore_index=True)
@@ -934,6 +1084,5 @@ ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}",
 
 ax1.set_facecolor(background_color)
 ax1.axis("off")
-
 
 st.pyplot(fig)

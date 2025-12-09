@@ -175,7 +175,7 @@
 173,7,FCA,G,FCN,6,53,2,0,,-1,18,Alu,AusDemSpiel,EB,TieferPass,,,,,,,,,,,,,,R,-7.5,41.0,0.14405996653630648
 174,7,FCN,H,FCA,18,54,2,0,,1,19,Alu,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,27.0,R,-17.0,35.5,0.30739829461757906
 175,7,FCA,G,FCN,7,55,2,0,,-1,20,Block,AusDemSpiel,USO,FlacheHereingabe,,,,,,,,,,,,,,R,-7.0,43.5,0.040768998401604334
-252,7,FCA,G,FCN,0,55,2,0,1:1,-1,21,ET,,,,,,,,,,,,,,,,,,,,0.0
+252,7,FCA,G,FCN,0,55,2,0,1:1,-1,21,ET,,,,,,,,,,,,,,,,1.0,,,,0.0
 176,7,FCN,H,FCA,19,58,2,0,,0,22,Vorbei,AusDemSpiel,USO,KontrollierteVorlage,8.0,16.0,,,,,,,,,,,27.0,R,3.0,36.0,0.13985636030475795
 177,7,FCN,H,FCA,20,59,2,0,,0,23,Block,AusDemSpiel,USO,Dribbling,8.0,,,,,,,,,,,,10.0,L,-14.5,44.0,0.0450578179461115
 178,7,FCN,H,FCA,21,60,2,0,,0,24,Block,Ecke,nE,UnkontrollierteVorbereitung,,,,,,,,,,,,,27.0,L,-11.0,24.5,0.0006268315293879597
