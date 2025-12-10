@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.0.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -60,8 +60,8 @@ abschlüsse["Vorbereitung"] = abschlüsse["VorT"].replace({
     "FlacheHereingabe": "Flache Hereingabe",
     "Dribbling": "Dribbling",    
     "DirekterStandard": "Direkter Standard",
-    "UnkontrollierteVorbereitung": "Sonstige",
-    "KontrollierteVorlage": "Sonstige",
+    "UnkontrollierteVorbereitung": "Unkontrollierte Vorbereitung",
+    "KontrollierteVorlage": "Kontrollierte Vorlage",
 })
 abschlüsse.drop("VorT", axis=1, inplace=True)
 
@@ -492,7 +492,7 @@ with col2:
     st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
     st.button("Filter zurücksetzen", on_click=reset_filters_1, key="reset_1")
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([59, 41])
 with col1:
     start, end = st.slider("Spiele wählen", min_value=1, max_value=spiele["SID"].max(), key="start_end")
 with col2:
@@ -680,7 +680,7 @@ elif heimauswärts == "Auswärts":
 if abschlüsse_fcn.empty and abschlüsse_opp.empty:
     st.error("Aktuell sind keine Abschlüsse ausgewählt!")
 else:
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([39, 36, 25])
 
     with col1:
         st.markdown(f"Punkte: {int(ergebnisse_fcn["Punkte"].sum())} ({float(ergebnisse_fcn["xPoints"].sum().round(2))})")
@@ -730,14 +730,14 @@ def reset_filters_2():
 
 # -------------------------------------------------- Filter erstellen  --------------------------------------------------
 st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
-col1, col2 = st.columns([77,23])
+col1, col2 = st.columns([77, 23])
 with col1:
     st.subheader("Metriken")
 with col2:
     st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
     st.button("Filter zurücksetzen", on_click=reset_filters_2, key="reset_2")
 
-col1, col2 = st.columns([2,3])
+col1, col2 = st.columns([2, 3])
 with col1:
     modus = st.radio("Maßeinheit",["Absolut", "Pro 80 Minuten"], index=["Absolut", "Pro 80 Minuten"].index(st.session_state.modus), key="modus", horizontal=True)
 with col2:
@@ -980,7 +980,7 @@ optionen.insert(0, "Alle Spieler")
 
 default_player = "Alle Spieler"
 default_schussart = ['Links', 'Rechts', 'Kopf', 'Sonstige']
-default_vorbereitung = ['Tiefer Pass', 'Flache Hereingabe', 'Hohe Flanke', 'Dribbling',  'Direkter Standard', 'Sonstige']
+default_vorbereitung = ['Kontrollierte Vorlage', 'Hohe Flanke', 'Flache Hereingabe', 'Tiefer Pass', 'Dribbling', 'Direkter Standard', 'Unkontrollierte Vorbereitung']
 
 # Session State initialisieren
 if "player_filter" not in st.session_state:
@@ -1003,12 +1003,12 @@ with col2:
     st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
     st.button("Filter zurücksetzen", on_click=reset_filters_3, key="reset_3")
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([42, 58])
 with col1: 
     player_filter = st.selectbox("Spieler auswählen", options=optionen, key="player_filter")
     schussart = st.multiselect("Schussart", ['Links', 'Rechts', 'Kopf', 'Sonstige'], default=default_schussart, key="schussart")
 with col2:
-    vorbereitung = st.multiselect("Vorbereitungsart", ['Tiefer Pass', 'Flache Hereingabe', 'Hohe Flanke', 'Dribbling',  'Direkter Standard', 'Sonstige'], 
+    vorbereitung = st.multiselect("Vorbereitungsart", ['Kontrollierte Vorlage', 'Hohe Flanke', 'Flache Hereingabe', 'Tiefer Pass', 'Dribbling', 'Direkter Standard', 'Unkontrollierte Vorbereitung'], 
         default=default_vorbereitung, key= "vorbereitung")
 
 if player_filter == "Alle Spieler":
@@ -1085,6 +1085,4 @@ ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}",
 ax1.set_facecolor(background_color)
 ax1.axis("off")
 
-
 st.pyplot(fig)
-
