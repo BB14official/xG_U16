@@ -196,7 +196,7 @@
 193,8,FCN,G,SSV,2,1,1,0,,0,1,Save,AusDemSpiel,USO,FlacheHereingabe,5.0,,,,,,,,,,,,10.0,R,-1.5,47.0,0.24099724569299008
 194,8,FCN,G,SSV,3,1,1,0,0:1,0,1,Tor,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,7.0,R,4.0,49.5,0.7517139575613467
 195,8,FCN,G,SSV,4,10,1,0,,1,2,Vorbei,AusDemSpiel,USO,KontrollierteVorlage,23.0,10.0,27.0,,,,,,,,,,5.0,R,-2.5,33.0,0.19948318189004222
-196,8,SSV,H,FCN,1,14,1,0,,-1,3,Block,AusDemSpiel,USO,Dribbling,,,,,,,,,,,,,,R,9.5,31.5,0.10094845509345086
+196,8,SSV,H,FCN,1,14,1,0,,-1,3,Block,AusDemSpiel,USO,Dribbling,,,,,,,,,,,,,,R,9.5,31.5,0.10087545354452436
 197,8,SSV,H,FCN,2,16,1,0,,-1,4,Save,AusDemSpiel,EB,TieferPass,,,,,,,,,,,,,,R,-11.0,42.0,0.21723565899346323
 198,8,SSV,H,FCN,3,19,1,0,1:1,-1,5,Tor,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,,R,-5.0,33.5,0.31209204910282645
 199,8,FCN,G,SSV,5,23,1,0,,0,6,TLK,Freistoss,nFS,UnkontrollierteVorbereitung,,,,,,,,,,,,,26.0,L,-15.5,41.5,0.09173047620848733
@@ -205,7 +205,7 @@
 202,8,FCN,G,SSV,8,37,1,0,1:2,0,9,Tor,Elfmeter,11M,DirekterStandard,,,,,,,,,,,,,7.0,R,-0.0,41.5,0.7524673905236755
 203,8,FCN,G,SSV,9,40,1,0,,1,10,Vorbei,AusDemSpiel,EB,Dribbling,26.0,4.0,20.0,26.0,16.0,23.0,,,,,,,16.0,R,-15.5,27.0,0.01014219064946123
 204,8,SSV,H,FCN,4,41,2,0,,-1,11,Alu,Freistoss,FSS,DirekterStandard,,,,,,,,,,,,,,R,-0.0,7.0,9.512202596214249e-05
-205,8,FCN,G,SSV,10,42,2,0,1:3,1,12,Tor,AusDemSpiel,USO,Dribbling,10.0,,,,,,,,,,,,27.0,R,10.0,44.5,0.2316523146501946
+205,8,FCN,G,SSV,10,42,2,0,1:3,1,12,Tor,AusDemSpiel,USO,Dribbling,10.0,,,,,,,,,,,,27.0,R,10.0,44.5,0.1782776036134373
 206,8,SSV,H,FCN,5,46,2,0,,-2,13,Vorbei,AusDemSpiel,nEW,UnkontrollierteVorbereitung,,,,,,,,,,,,,,L,-7.0,38.5,0.08420986505954693
 207,8,SSV,H,FCN,6,46,2,0,,-2,13,Vorbei,AusDemSpiel,nEW,UnkontrollierteVorbereitung,,,,,,,,,,,,,,L,-1.5,36.5,0.02049730671554145
 208,8,SSV,H,FCN,7,46,2,0,,-2,13,Vorbei,AusDemSpiel,nEW,UnkontrollierteVorbereitung,,,,,,,,,,,,,,R,-3.0,38.5,0.06328286681735713
