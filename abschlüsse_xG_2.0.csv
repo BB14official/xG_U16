@@ -227,7 +227,7 @@
 224,9,FCN,G,UHG,2,6,1,0,,0,2,Vorbei,AusDemSpiel,nEW,Dribbling,7.0,13.0,10.0,,,,,,,,,,4.0,R,-11.0,27.5,0.015088291754418165
 225,9,FCN,G,UHG,3,7,1,0,,0,3,Vorbei,Ecke,nE,UnkontrollierteVorbereitung,,,,,,,,,,,,,20.0,L,-17.5,29.5,0.010123268304165623
 226,9,UHG,H,FCN,1,10,1,0,,0,4,Block,AusDemSpiel,USO,TieferPass,,,,,,,,,,,,,,R,-12.5,44.5,0.06209406971634287
-227,9,UHG,H,FCN,2,11,1,0,,0,5,Vorbei,Ecke,E,HoheFlanke,,,,,,,,,,,,,,K,-6.5,45.0,0.09281307024817205
+227,9,UHG,H,FCN,2,11,1,0,,0,5,Vorbei,Ecke,E,HoheFlanke,,,,,,,,,,,,,,K,-6.5,45.0,0.07631908101701665
 280,9,FCN,G,UHG,0,18,1,0,0:1,0,6,ET,,,,,,,,,,,,,,,,,,,,0.0
 228,9,UHG,H,FCN,3,22,1,0,,-1,7,Alu,AusDemSpiel,EB,FlacheHereingabe,,,,,,,,,,,,,,L,-9.0,39.0,0.024879103338814372
 229,9,UHG,H,FCN,4,22,1,0,,-1,8,Block,AusDemSpiel,nEW,KontrollierteVorlage,,,,,,,,,,,,,,R,-12.5,31.5,0.003405740231859623
