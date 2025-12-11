@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.0.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.0.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -282,7 +282,6 @@ else:
     df_goals.loc[df_goals["Ergeb"]=="ET", "Entstehung"] = "ET"
 
     df_goals = df_goals[["Min", "Ereignis", "Spieler", "xG", "Entstehung", "Vorlage", "Vereinsname"]].copy()
-    df_goals["xG"] = df_goals["xG"].round(2)
 
     df_karten = karten[karten["SID"]==game]
 
@@ -318,7 +317,7 @@ else:
             f"{'   ' + x['Spieler'] if pd.notna(x['Spieler']) else ''}"  # Schütze (falls vorhanden)
             f"{', ' + x['Vorlage'] if pd.notna(x['Vorlage']) else ''}"  # Vorlage (falls vorhanden)
             f"{'   (' + x['Entstehung'] + ')' if x['Entstehung'] != 'Regulär' else ''}"  # Entstehung (nur wenn ≠ Regulär)
-            f"{'   ' + format(x['xG']*100, '.0f') + '%' if x['xG'] not in [0, None] and not pd.isna(x['xG']) else ''}"  # xG-Wert
+            f"{('   <1%' if 0 < x['xG'] < 0.01 else '   ' + format(x['xG']*100, '.0f') + '%') if pd.notna(x['xG']) and x['xG'] != 0 else ''}"
         ),
         axis=1
     )
@@ -1085,7 +1084,4 @@ ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}",
 ax1.set_facecolor(background_color)
 ax1.axis("off")
 
-
 st.pyplot(fig)
-
-
