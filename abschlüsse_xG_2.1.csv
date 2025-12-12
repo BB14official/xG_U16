@@ -244,7 +244,7 @@
 240,9,UHG,H,FCN,12,46,2,1,,0,18,Save,AusDemSpiel,EB,FlacheHereingabe,,,,,,,,,,,,,,L,6.0,48.0,0.06789203295748826
 241,9,UHG,H,FCN,13,53,2,1,,0,19,Save,AusDemSpiel,EB,TieferPass,,,,,,,,,,,,,,R,-9.0,49.5,0.3665241433610573
 242,9,UHG,H,FCN,14,55,2,1,,0,20,Vorbei,AusDemSpiel,USO,Dribbling,,,,,,,,,,,,,,L,19.0,32.5,0.01438926081840057
-243,9,FCN,G,UHG,7,57,2,-1,2:3,0,21,Tor,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,8.0,L,-1.0,46.5,0.8873277921463183
+243,9,FCN,G,UHG,7,57,2,-1,2:3,0,21,Tor,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,8.0,L,-6.0,51.5,0.70436104054068
 244,9,UHG,H,FCN,15,61,2,1,,-1,22,Save,AusDemSpiel,USO,KontrollierteVorlage,,,,,,,,,,,,,,R,-3.5,40.5,0.4306550253262708
 245,9,UHG,H,FCN,16,76,2,1,,-1,23,Vorbei,Ecke,E,HoheFlanke,,,,,,,,,,,,,,K,-8.0,44.5,0.08964652320311431
 246,9,FCN,G,UHG,8,77,2,-1,,1,24,Save,AusDemSpiel,EB,TieferPass,16.0,,,,,,,,,,,,8.0,R,4.0,35.5,0.31338333542886543
