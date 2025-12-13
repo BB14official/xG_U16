@@ -135,7 +135,7 @@
 133,6,FWK,H,FCN,7,34,1,0,,-1,10,Vorbei,AusDemSpiel,USO,KontrollierteVorlage,,,,,,,,,,,,,,L,8.0,38.0,0.06984855724955369
 134,6,FWK,H,FCN,8,35,1,0,,-1,11,Save,AusDemSpiel,USO,TieferPass,,,,,,,,,,,,,,L,9.0,44.5,0.32048948026040774
 135,6,FCN,G,FWK,5,36,1,0,1:3,1,12,Tor,AusDemSpiel,EB,FlacheHereingabe,7.0,10.0,7.0,8.0,23.0,20.0,,,,,,,4.0,R,3.0,47.0,0.7977308733837112
-136,6,FWK,H,FCN,9,38,1,0,,-2,13,Vorbei,Ecke,E,HoheFlanke,,,,,,,,,,,,,,R,-4.5,45.0,0.2203394897325499
+136,6,FWK,H,FCN,9,38,1,0,,-2,13,Vorbei,Ecke,E,HoheFlanke,,,,,,,,,,,,,,R,-4.5,45.0,0.1252023264437099
 137,6,FCN,G,FWK,6,41,2,0,,2,14,Save,AusDemSpiel,USO,KontrollierteVorlage,26.0,,,,,,,,,,,,8.0,R,5.0,36.0,0.11496522837664797
 138,6,FCN,G,FWK,7,45,2,0,,2,15,Save,AusDemSpiel,USO,UnkontrollierteVorbereitung,,,,,,,,,,,,,27.0,R,8.0,29.5,0.013756890339052613
 139,6,FCN,G,FWK,8,46,2,0,,2,16,Vorbei,AusDemSpiel,USO,KontrollierteVorlage,27.0,,,,,,,,,,,,26.0,R,5.5,26.5,0.02058379673963518
@@ -232,7 +232,7 @@
 228,9,UHG,H,FCN,3,22,1,0,,-1,7,Alu,AusDemSpiel,EB,FlacheHereingabe,,,,,,,,,,,,,,L,-9.0,39.0,0.02121778557075038
 229,9,UHG,H,FCN,4,22,1,0,,-1,8,Block,AusDemSpiel,nEW,KontrollierteVorlage,,,,,,,,,,,,,,R,-12.5,31.5,0.0030718954208891333
 230,9,UHG,H,FCN,5,22,1,0,,-1,8,Save,AusDemSpiel,USO,KontrollierteVorlage,,,,,,,,,,,,,,L,-14.5,34.0,0.009619030057463658
-231,9,UHG,H,FCN,6,23,1,0,,-1,9,Vorbei,AusDemSpiel,USO,HoheFlanke,,,,,,,,,,,,,,L,1.5,46.0,0.24674405764647594
+231,9,UHG,H,FCN,6,23,1,0,,-1,9,Vorbei,AusDemSpiel,USO,HoheFlanke,,,,,,,,,,,,,,L,1.5,46.0,0.2149770753008405
 232,9,UHG,H,FCN,7,24,1,0,1:1,-1,10,Tor,AusDemSpiel,USO,KontrollierteVorlage,,,,,,,,,,,,,,L,1.0,43.5,0.07503320075974247
 233,9,FCN,G,UHG,4,29,1,0,,0,11,Block,AusDemSpiel,EB,TieferPass,4.0,20.0,16.0,26.0,13.0,4.0,,,,,,,7.0,R,12.0,41.5,0.10462601716806862
 234,9,FCN,G,UHG,5,30,1,0,,0,12,Vorbei,Ecke,nE,UnkontrollierteVorbereitung,,,,,,,,,,,,,27.0,R,-7.5,41.5,0.08408527156511893
