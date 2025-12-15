@@ -16,7 +16,7 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.0.csv")
+abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
 teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
 spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
 spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
@@ -1114,3 +1114,4 @@ else:
 
 
     st.pyplot(fig)
+
