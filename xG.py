@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -927,7 +927,7 @@ spieler = spieler[['Nr', 'Vorname', 'Nachname', 'Position', 'Startelf', 'Spielze
                    'xGChain', 'xGBuildup', 'xGImpact', 'xGAImpact', 'xPlusMinus']]
 
 # -------------------------------------------------- pro 80 Minuten-----------------------------------------
-if abschlüsse_fcn.empty and abschlüsse_opp.empty:
+if abschlüsse_fcn.empty:
     st.error("Aktuell sind keine Abschlüsse ausgewählt!")
 else:
     if modus == "Pro 80 Minuten":
@@ -969,6 +969,8 @@ else:
     "Nr": st.column_config.Column(pinned="left"),
     "Vorname": st.column_config.Column(pinned="left"),
     "Nachname": st.column_config.Column(pinned="left"),
+
+    "Spielzeitanteil": st.column_config.NumberColumn(format="%.0f%%"),
 
     "Schüsse": st.column_config.NumberColumn("Schüsse", format="%.2f" if "Schüsse" in spalten_2dp else None),
     "Aufs Tor": st.column_config.NumberColumn("Aufs Tor", format="%.2f" if "Aufs Tor" in spalten_2dp else None),
@@ -1043,12 +1045,13 @@ else:
     einzelspieler = abschlüsse_fcn[abschlüsse_fcn["SNr"]==player].copy()
     minuten = int(spieler.loc[spieler["Nr"]==player, "Spielzeit"].values[0])
 
+
+einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
+einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
+
 if einzelspieler.empty:
     st.error("Aktuell sind keine Abschlüsse ausgewählt!")
 else:
-    einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
-    einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
-
     einzelspieler_np = einzelspieler[einzelspieler["Spielphase"]!="Elfmeter"].copy()
     einzelspieler_p = einzelspieler[einzelspieler["Spielphase"]=="Elfmeter"].copy()
 
@@ -1112,6 +1115,4 @@ else:
     ax1.set_facecolor(background_color)
     ax1.axis("off")
 
-
     st.pyplot(fig)
-
