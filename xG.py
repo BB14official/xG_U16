@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.0.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -945,6 +945,10 @@ else:
         spieler["xGAImpact"] = ((spieler["xGAImpact"]/spieler["Spielzeit"])*80).round(2)
         spieler["xPlusMinus"] = ((spieler["xPlusMinus"]/spieler["Spielzeit"])*80).round(2)
 
+        spalten_2dp = ["Schüsse", "Aufs Tor", "Tore", "xG", "Effizienz", "Schlüsselpässe", "Vorlagen", "xA", "xGChain", "xGBuildup", "xGImpact", "xGAImpact", "xPlusMinus"]
+    else:
+        spalten_2dp = ["xG", "Effizienz", "xA", "xGChain", "xGBuildup", "xGImpact", "xGAImpact", "xPlusMinus"] 
+
     spieler_gefiltert = spieler[(spieler["Position"].isin(gefilterte_positionen)) & (spieler["Spielzeit"]>=min_spielzeit)]
 
     # --- Gesamt-Zeile erstellen ---
@@ -961,11 +965,32 @@ else:
 
     #spieler_gefiltert = pd.concat([spieler_gefiltert, sum_row.to_frame().T], ignore_index=True)
 
-    st.dataframe(spieler_gefiltert, hide_index=True, column_config={
-        "Nr": st.column_config.Column(pinned="left"),
-        "Vorname": st.column_config.Column(pinned="left"),
-        "Nachname": st.column_config.Column(pinned="left")
-        })
+    column_config = {
+    "Nr": st.column_config.Column(pinned="left"),
+    "Vorname": st.column_config.Column(pinned="left"),
+    "Nachname": st.column_config.Column(pinned="left"),
+
+    "Schüsse": st.column_config.NumberColumn("Schüsse", format="%.2f" if "Schüsse" in spalten_2dp else None),
+    "Aufs Tor": st.column_config.NumberColumn("Aufs Tor", format="%.2f" if "Aufs Tor" in spalten_2dp else None),
+    "Tore": st.column_config.NumberColumn("Tore", format="%.2f" if "Tore" in spalten_2dp else None),
+    "xG": st.column_config.NumberColumn("xG", help="Summe der Torwahrscheinlichkeiten aller Schüsse", format="%.2f" if "xG" in spalten_2dp else None),
+    "Effizienz": st.column_config.NumberColumn("Effizienz", help="Tore - xG", format="%.2f" if "Effizienz" in spalten_2dp else None),
+    "Schlüsselpässe": st.column_config.NumberColumn("Schlüsselpässe", help="Pässe, die einen Schuss vorbereiten", format="%.2f" if "Schlüsselpässe" in spalten_2dp else None),
+    "Vorlagen": st.column_config.NumberColumn("Vorlagen", format="%.2f" if "Vorlagen" in spalten_2dp else None),
+    "xA": st.column_config.NumberColumn("xA", help="xG aller vorbereiteten Schüsse", format="%.2f" if "xA" in spalten_2dp else None),
+    "xGChain": st.column_config.NumberColumn("xGChain", help="xG der Schüsse, bei denen der Spieler an der Passstafette beteiligt war", format="%.2f" if "xGChain" in spalten_2dp else None),
+    "xGBuildup": st.column_config.NumberColumn("xGBuildup", help="xG der Schüsse, bei denen der Spieler an der Passstafette beteiligt war (ohne Schlüsselpässe und Schüsse)", format="%.2f" if "xGBuildup" in spalten_2dp else None),
+    "xGImpact": st.column_config.NumberColumn("xGImpact", help="xG des eigenen Teams, während der Spieler auf dem Feld stand", format="%.2f" if "xGImpact" in spalten_2dp else None),
+    "xGAImpact": st.column_config.NumberColumn("xGAImpact", help="xG des gegnerischen Teams, während der Spieler auf dem Feld stand", format="%.2f" if "xGAImpact" in spalten_2dp else None),
+    "xPlusMinus": st.column_config.NumberColumn("xPlusMinus", help="xGImpact - xGAImpact", format="%.2f" if "xPlusMinus" in spalten_2dp else None),
+}
+
+st.dataframe(
+    spieler_gefiltert,
+    hide_index=True,
+    column_config=column_config,
+    use_container_width=True
+)
 
 # Spieler mit dem höchsten xG-Wert
 max_xG =int(spieler.loc[spieler["xG"] == spieler["xG"].max(), "Nr"].values[0])
@@ -1084,6 +1109,4 @@ ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}",
 ax1.set_facecolor(background_color)
 ax1.axis("off")
 
-
 st.pyplot(fig)
-
