@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.0.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.0.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -1099,15 +1099,14 @@ ax1.text(0.07, 0.4, f"{minuten} (von {spielzeit_max}) Minuten gespielt",
          fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
 ax1.text(0.07, 0.2, "U17 Bayernliga 2025/26", 
          fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
-ax1.text(0.93, 0.7, f"xG: {xG_spieler} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
+ax1.text(0.93, 0.7, f"xG: {xG_spieler: .2f} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
          fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=30, alpha=1, zorder=1)
-ax1.text(0.93, 0.4, f"+{xG_spieler_p} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
+ax1.text(0.93, 0.4, f"+{xG_spieler_p: .2f} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
          fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
-ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss}", 
+ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss: .2f}", 
          fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
 
 ax1.set_facecolor(background_color)
 ax1.axis("off")
-
 
 st.pyplot(fig)
