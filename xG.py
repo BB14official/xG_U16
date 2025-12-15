@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.0.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.0.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -983,17 +983,17 @@ else:
     "xGImpact": st.column_config.NumberColumn("xGImpact", help="xG des eigenen Teams, während der Spieler auf dem Feld stand", format="%.2f" if "xGImpact" in spalten_2dp else None),
     "xGAImpact": st.column_config.NumberColumn("xGAImpact", help="xG des gegnerischen Teams, während der Spieler auf dem Feld stand", format="%.2f" if "xGAImpact" in spalten_2dp else None),
     "xPlusMinus": st.column_config.NumberColumn("xPlusMinus", help="xGImpact - xGAImpact", format="%.2f" if "xPlusMinus" in spalten_2dp else None),
-}
+    }
 
-st.dataframe(
-    spieler_gefiltert,
-    hide_index=True,
-    column_config=column_config,
-    use_container_width=True
-)
+    st.dataframe(
+        spieler_gefiltert,
+        hide_index=True,
+        column_config=column_config,
+        use_container_width=True
+    )
 
-# Spieler mit dem höchsten xG-Wert
-max_xG =int(spieler.loc[spieler["xG"] == spieler["xG"].max(), "Nr"].values[0])
+    # Spieler mit dem höchsten xG-Wert
+    max_xG =int(spieler.loc[spieler["xG"] == spieler["xG"].max(), "Nr"].values[0])
 
 # ================================================== SPIELER-MAP ==================================================
 # Selectbox Spieler
@@ -1043,71 +1043,73 @@ else:
     einzelspieler = abschlüsse_fcn[abschlüsse_fcn["SNr"]==player].copy()
     minuten = int(spieler.loc[spieler["Nr"]==player, "Spielzeit"].values[0])
 
-einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
-einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
-
-einzelspieler_np = einzelspieler[einzelspieler["Spielphase"]!="Elfmeter"].copy()
-einzelspieler_p = einzelspieler[einzelspieler["Spielphase"]=="Elfmeter"].copy()
-
-# non-penalty
-xG_spieler = float(einzelspieler_np["xG"].sum().round(2))
-tore_spieler = int((einzelspieler_np["Ergeb"]=="Tor").sum())
-schüsse_spieler = int(einzelspieler_np["Ergeb"].notnull().sum())
-
-# penalty
-xG_spieler_p = float(einzelspieler_p["xG"].sum().round(2))
-tore_spieler_p = int((einzelspieler_p["Ergeb"]=="Tor").sum())
-schüsse_spieler_p = int(einzelspieler_p["Ergeb"].notnull().sum())
-
-if schüsse_spieler > 0:
-    xg_pro_schuss = round((xG_spieler/schüsse_spieler), 2)
+if einzelspieler.empty:
+    st.error("Aktuell sind keine Abschlüsse ausgewählt!")
 else:
-    xg_pro_schuss = "-"
+    einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
+    einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
 
-fig = plt.figure(figsize=(14, 12), constrained_layout=True)
-fig.set_facecolor(background_color)
+    einzelspieler_np = einzelspieler[einzelspieler["Spielphase"]!="Elfmeter"].copy()
+    einzelspieler_p = einzelspieler[einzelspieler["Spielphase"]=="Elfmeter"].copy()
 
-gs = fig.add_gridspec(nrows = 6, ncols = 4)
+    # non-penalty
+    xG_spieler = float(einzelspieler_np["xG"].sum().round(2))
+    tore_spieler = int((einzelspieler_np["Ergeb"]=="Tor").sum())
+    schüsse_spieler = int(einzelspieler_np["Ergeb"].notnull().sum())
 
-ax1 = fig.add_subplot(gs[0,0:4])
-ax2 = fig.add_subplot(gs[1:6,0:4])
+    # penalty
+    xG_spieler_p = float(einzelspieler_p["xG"].sum().round(2))
+    tore_spieler_p = int((einzelspieler_p["Ergeb"]=="Tor").sum())
+    schüsse_spieler_p = int(einzelspieler_p["Ergeb"].notnull().sum())
 
-pitch = VerticalPitch(
-    pitch_type='skillcorner', half=True, pitch_length=105, pitch_width=68,
-    axis=False, label=False, tick=False,
-    pad_left=3, pad_right=3, pad_top=3, pad_bottom=0.1,
-    pitch_color=background_color, line_color=text_color,
-    stripe=False, linewidth=1, corner_arcs=True, goal_type="box"
-)
-pitch.draw(ax=ax2)
+    if schüsse_spieler > 0:
+        xg_pro_schuss = round((xG_spieler/schüsse_spieler), 2)
+    else:
+        xg_pro_schuss = "-"
 
-for i in einzelspieler.to_dict(orient="records"):
-            pitch.scatter(
-                i["yFe"],
-                i["xFe"],
-                marker = '*' if i["Ergeb"] == "Tor" else 'o',
-                s = np.sqrt(i["xG"]) * 800 * (3 if i["Ergeb"] == "Tor" else 1),
-                facecolors=to_rgba("#AA1124", 0.5),
-                edgecolors=to_rgba("#AA1124", 1),
-                linewidth = 1.5,
-                zorder = 2,
-                ax = ax2)
+    fig = plt.figure(figsize=(14, 12), constrained_layout=True)
+    fig.set_facecolor(background_color)
 
-ax1.text(0.07, 0.7, player_filter, 
-         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=30, alpha=1, zorder=1)
-ax1.text(0.07, 0.4, f"{minuten} (von {spielzeit_max}) Minuten gespielt", 
-         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
-ax1.text(0.07, 0.2, "U17 Bayernliga 2025/26", 
-         fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
-ax1.text(0.93, 0.7, f"xG: {xG_spieler: .2f} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
-         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=30, alpha=1, zorder=1)
-ax1.text(0.93, 0.4, f"+{xG_spieler_p: .2f} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
-         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
-ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss: .2f}", 
-         fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
+    gs = fig.add_gridspec(nrows = 6, ncols = 4)
 
-ax1.set_facecolor(background_color)
-ax1.axis("off")
+    ax1 = fig.add_subplot(gs[0,0:4])
+    ax2 = fig.add_subplot(gs[1:6,0:4])
 
+    pitch = VerticalPitch(
+        pitch_type='skillcorner', half=True, pitch_length=105, pitch_width=68,
+        axis=False, label=False, tick=False,
+        pad_left=3, pad_right=3, pad_top=3, pad_bottom=0.1,
+        pitch_color=background_color, line_color=text_color,
+        stripe=False, linewidth=1, corner_arcs=True, goal_type="box"
+    )
+    pitch.draw(ax=ax2)
 
-st.pyplot(fig)
+    for i in einzelspieler.to_dict(orient="records"):
+                pitch.scatter(
+                    i["yFe"],
+                    i["xFe"],
+                    marker = '*' if i["Ergeb"] == "Tor" else 'o',
+                    s = np.sqrt(i["xG"]) * 800 * (3 if i["Ergeb"] == "Tor" else 1),
+                    facecolors=to_rgba("#AA1124", 0.5),
+                    edgecolors=to_rgba("#AA1124", 1),
+                    linewidth = 1.5,
+                    zorder = 2,
+                    ax = ax2)
+
+    ax1.text(0.07, 0.7, player_filter, 
+            fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=30, alpha=1, zorder=1)
+    ax1.text(0.07, 0.4, f"{minuten} (von {spielzeit_max}) Minuten gespielt", 
+            fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
+    ax1.text(0.07, 0.2, "U17 Bayernliga 2025/26", 
+            fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
+    ax1.text(0.93, 0.7, f"xG: {xG_spieler: .2f} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
+            fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=30, alpha=1, zorder=1)
+    ax1.text(0.93, 0.4, f"+{xG_spieler_p: .2f} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
+            fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
+    ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss: .2f}", 
+            fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
+
+    ax1.set_facecolor(background_color)
+    ax1.axis("off")
+
+    st.pyplot(fig)
