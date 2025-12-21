@@ -1105,11 +1105,11 @@ else:
             fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
     ax1.text(0.07, 0.2, "U17 Bayernliga 2025/26", 
             fontproperties=font_props, color=text_color, ha='left', va='top', fontsize=20, alpha=1, zorder=1)
-    ax1.text(0.93, 0.7, f"xG: {xG_spieler: .2f} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
+    ax1.text(0.93, 0.7, f"xG: {xG_spieler:.2f} ({tore_spieler} Tore / {schüsse_spieler} Schüsse)", 
             fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=30, alpha=1, zorder=1)
-    ax1.text(0.93, 0.4, f"+{xG_spieler_p: .2f} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
+    ax1.text(0.93, 0.4, f"+{xG_spieler_p:.2f} ({tore_spieler_p} Tore / {schüsse_spieler_p} Elfmeter)", 
             fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
-    ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss: .2f}", 
+    ax1.text(0.93, 0.2, f"xG/Schuss (ohne Elfmeter): {xg_pro_schuss:.2f}", 
             fontproperties=font_props, color=text_color, ha='right', va='top', fontsize=20, alpha=1, zorder=1)
 
     ax1.set_facecolor(background_color)
@@ -1117,4 +1117,5 @@ else:
 
 
     st.pyplot(fig)
+
 
