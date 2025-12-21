@@ -682,11 +682,11 @@ else:
     col1, col2, col3 = st.columns([39, 36, 25])
 
     with col1:
-        st.markdown(f"Punkte: {int(ergebnisse_fcn["Punkte"].sum())} ({float(ergebnisse_fcn["xPoints"].sum().round(2)): .2f})")
+        st.markdown(f"Punkte: {int(ergebnisse_fcn["Punkte"].sum())} ({float(ergebnisse_fcn["xPoints"].sum().round(2)):.2f})")
     with col2:
-        st.markdown(f"Tore: {int(ergebnisse_fcn["Tore"].sum())} ({float(ergebnisse_fcn["xG"].sum().round(2)): .2f})")
+        st.markdown(f"Tore: {int(ergebnisse_fcn["Tore"].sum())} ({float(ergebnisse_fcn["xG"].sum().round(2)):.2f})")
     with col3:
-        st.markdown(f"Gegentore: {int(ergebnisse_opp["Tore"].sum())} ({float(ergebnisse_opp["xG"].sum().round(2)): .2f})")
+        st.markdown(f"Gegentore: {int(ergebnisse_opp["Tore"].sum())} ({float(ergebnisse_opp["xG"].sum().round(2)):.2f})")
 
 # ================================================== SPIELER-METRIKEN ==================================================
 # -------------------------------------------------- Filter Vorbereitungen --------------------------------------------------
@@ -1117,3 +1117,4 @@ else:
 
 
     st.pyplot(fig)
+
