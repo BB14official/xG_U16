@@ -16,15 +16,15 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -682,11 +682,11 @@ else:
     col1, col2, col3 = st.columns([39, 36, 25])
 
     with col1:
-        st.markdown(f"Punkte: {int(ergebnisse_fcn["Punkte"].sum())} ({float(ergebnisse_fcn["xPoints"].sum().round(2))})")
+        st.markdown(f"Punkte: {int(ergebnisse_fcn["Punkte"].sum())} ({float(ergebnisse_fcn["xPoints"].sum().round(2)): .2f})")
     with col2:
-        st.markdown(f"Tore: {int(ergebnisse_fcn["Tore"].sum())} ({float(ergebnisse_fcn["xG"].sum().round(2))})")
+        st.markdown(f"Tore: {int(ergebnisse_fcn["Tore"].sum())} ({float(ergebnisse_fcn["xG"].sum().round(2)): .2f})")
     with col3:
-        st.markdown(f"Gegentore: {int(ergebnisse_opp["Tore"].sum())} ({float(ergebnisse_opp["xG"].sum().round(2))})")
+        st.markdown(f"Gegentore: {int(ergebnisse_opp["Tore"].sum())} ({float(ergebnisse_opp["xG"].sum().round(2)): .2f})")
 
 # ================================================== SPIELER-METRIKEN ==================================================
 # -------------------------------------------------- Filter Vorbereitungen --------------------------------------------------
@@ -1114,6 +1114,5 @@ else:
 
     ax1.set_facecolor(background_color)
     ax1.axis("off")
-
 
     st.pyplot(fig)
