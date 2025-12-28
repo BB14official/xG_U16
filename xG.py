@@ -16,15 +16,20 @@ st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
-abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+@st.cache_data
+def load_data():
+    abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+    teams = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Teams")
+    spiele = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spiele")
+    spieler = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spieler")
+    spielzeiten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
+    karten = pd.read_excel("xG/xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+    return abschlüsse, teams, spiele, spieler, spielzeiten, karten
+
+abschlüsse, teams, spiele, spieler, spielzeiten, karten = load_data()
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+font_props = font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -66,7 +71,7 @@ abschlüsse["Vorbereitung"] = abschlüsse["VorT"].replace({
 abschlüsse.drop("VorT", axis=1, inplace=True)
 
 # Spiele-Filter erstellen
-spiele_filter = spiele[["SID", "Heim", "Gast"]].copy()
+spiele_filter = spiele[["SID", "Heim", "Gast"]]
 spiele_filter["Heimteam"] = spiele_filter["Heim"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Gästeteam"] = spiele_filter["Gast"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Spiel"] = "(" + spiele_filter["SID"].astype(str) + ") " + spiele_filter["Heimteam"] + ' - ' + spiele_filter["Gästeteam"]
@@ -86,27 +91,22 @@ date = spiele.loc[spiele["SID"]==game, "Datum"].iloc[0]
 date = date.strftime("%d.%m.%Y")
 
 # ================================================== METRIK-VORBEREITUNGEN ==================================================
-# -------------------------------------------------- xGAP berechnen --------------------------------------------------
-xgap = abschlüsse.groupby(["SID", "AP"])["xG"].apply(lambda x: 1 - np.prod(1 - x))
-
 # max AbNr pro AP bestimmen
 max_abnr = abschlüsse.groupby(["SID", "AP"])["AbNr"].transform("max")
 
 # neue Spalte xGAP setzen (nur bei höchster AbNr einer AP)
-abschlüsse["xGAP"] = np.where(
-    abschlüsse["AbNr"] == max_abnr,
-    abschlüsse.set_index(["SID", "AP"]).index.map(xgap),
-    np.nan
-)
+abschlüsse["xGAP"] = abschlüsse.groupby(["SID","AP"])["xG"].transform(lambda x: 1 - np.prod(1-x))
+abschlüsse.loc[abschlüsse["AbNr"] != max_abnr, "xGAP"] = np.nan
 
-# -------------------------------------------------- xPoints berechnen --------------------------------------------------
+# -------------------------------------------------- xPoints berechnen für alle Spiele --------------------------------------------------
 xG_end = abschlüsse.groupby(["SID", "HG"], as_index=False)["xGAP"].sum().rename(columns={"xGAP": "xG"})
 
 xg_h = xG_end[xG_end["HG"] == "H"].rename(columns={"xG": "xGH"})
 xg_a = xG_end[xG_end["HG"] == "G"].rename(columns={"xG": "xGG"})
 
 spiele_üb = spiele.copy()
-spiele_üb = (spiele_üb.merge(xg_h[["SID", "xGH"]], on="SID", how="left").merge(xg_a[["SID", "xGG"]], on="SID", how="left"))
+spiele_üb = spiele_üb.merge(xg_h[["SID", "xGH"]], on="SID", how="left")
+spiele_üb = spiele_üb.merge(xg_a[["SID", "xGG"]], on="SID", how="left")
 
 xPH_list = []
 xPG_list = []
@@ -135,20 +135,25 @@ spiele_üb["xPG"] = xPG_list
 
 spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']] = spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']].round(2)
 
-heim = spiele_üb[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']].copy()
-gast = spiele_üb[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']].copy()
+# Heim-/Gast-DataFrames erstellen
+heim = spiele_üb[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']]
+gast = spiele_üb[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']]
 
 heim["HG"] = "H"
 gast["HG"] = "G"
 
-heim = heim.rename(columns={"Heim": "Team", "TH": "Tore", "PH": "Punkte", "xGH": "xG", "xPH": "xPoints"})
-gast = gast.rename(columns={"Gast": "Team", "TG": "Tore", "PG": "Punkte", "xGG": "xG", "xPG": "xPoints"})
+heim.rename(columns={"Heim": "Team", "TH": "Tore", "PH": "Punkte", "xGH": "xG", "xPH": "xPoints"}, inplace=True)
+gast.rename(columns={"Gast": "Team", "TG": "Tore", "PG": "Punkte", "xGG": "xG", "xPG": "xPoints"}, inplace=True)
 
-spiele_üb = pd.concat([heim, gast], ignore_index=True)
-spiele_üb = spiele_üb[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']].sort_values(["SID", "HG"], ascending=[True, False])
+# concat nur wenn DataFrames gefüllt
+if not heim.empty and not gast.empty:
+    spiele_üb = pd.concat([heim, gast], ignore_index=True)
+    spiele_üb = spiele_üb[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']] \
+                    .sort_values(["SID", "HG"], ascending=[True, False])
 
 heimspiele = heim[heim["Team"]=="FCN"]["SID"].tolist()
 auswärtsspiele = gast[gast["Team"]=="FCN"]["SID"].tolist()
+
 # ================================================== EINZELSPIEL ==================================================
 # Heim- und Auswärtsteam splitten
 df_h = abschlüsse[(abschlüsse["SID"] == game) & (abschlüsse["HG"] == "H")].copy()
@@ -1115,7 +1120,4 @@ else:
     ax1.set_facecolor(background_color)
     ax1.axis("off")
 
-
     st.pyplot(fig)
-
-
