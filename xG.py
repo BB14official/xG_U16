@@ -18,8 +18,8 @@ st.subheader("Expected Goals 2025/26")
 # Neue Daten einlesen
 @st.cache_data
 def load_data():
-    abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
-    xls = "xG/xG_U16_Anwendung.xlsx"
+    abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
+    xls = "xG_U16_Anwendung.xlsx"
     teams = pd.read_excel(xls, sheet_name="Teams")
     spiele = pd.read_excel(xls, sheet_name="Spiele")
     spieler = pd.read_excel(xls, sheet_name="Spieler")
@@ -32,7 +32,7 @@ abschlüsse, teams, spiele, spieler, spielzeiten, karten = load_data()
 # Setting custom font
 @st.cache_resource
 def load_font():
-    return font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
+    return font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
 
 font_props = load_font()
 
@@ -1118,4 +1118,5 @@ else:
 import psutil
 
 #process = psutil.Process()
+
 #st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
