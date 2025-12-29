@@ -1114,9 +1114,3 @@ else:
 
     st.pyplot(fig)
     plt.close(fig)
-
-import psutil
-
-#process = psutil.Process()
-
-#st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
