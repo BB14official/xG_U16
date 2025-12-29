@@ -18,18 +18,23 @@ st.subheader("Expected Goals 2025/26")
 # Neue Daten einlesen
 @st.cache_data
 def load_data():
-    abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-    teams = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Teams")
-    spiele = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spiele")
-    spieler = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spieler")
-    spielzeiten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Spielzeiten")
-    karten = pd.read_excel("xG_U16_Anwendung.xlsx", sheet_name="Rote Karten")
+    abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+    xls = "xG/xG_U16_Anwendung.xlsx"
+    teams = pd.read_excel(xls, sheet_name="Teams")
+    spiele = pd.read_excel(xls, sheet_name="Spiele")
+    spieler = pd.read_excel(xls, sheet_name="Spieler")
+    spielzeiten = pd.read_excel(xls, sheet_name="Spielzeiten")
+    karten = pd.read_excel(xls, sheet_name="Rote Karten")
     return abschlüsse, teams, spiele, spieler, spielzeiten, karten
 
 abschlüsse, teams, spiele, spieler, spielzeiten, karten = load_data()
 
 # Setting custom font
-font_props = font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+@st.cache_resource
+def load_font():
+    return font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
+
+font_props = load_font()
 
 # Teamfarben festlegen
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
@@ -71,7 +76,7 @@ abschlüsse["Vorbereitung"] = abschlüsse["VorT"].replace({
 abschlüsse.drop("VorT", axis=1, inplace=True)
 
 # Spiele-Filter erstellen
-spiele_filter = spiele[["SID", "Heim", "Gast"]]
+spiele_filter = spiele[["SID", "Heim", "Gast"]].copy()
 spiele_filter["Heimteam"] = spiele_filter["Heim"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Gästeteam"] = spiele_filter["Gast"].map(teams.set_index("TID")["Vereinsname"])
 spiele_filter["Spiel"] = "(" + spiele_filter["SID"].astype(str) + ") " + spiele_filter["Heimteam"] + ' - ' + spiele_filter["Gästeteam"]
@@ -91,68 +96,75 @@ date = spiele.loc[spiele["SID"]==game, "Datum"].iloc[0]
 date = date.strftime("%d.%m.%Y")
 
 # ================================================== METRIK-VORBEREITUNGEN ==================================================
-# max AbNr pro AP bestimmen
-max_abnr = abschlüsse.groupby(["SID", "AP"])["AbNr"].transform("max")
+@st.cache_data
+def compute_xgap_xpts(abschlüsse, spiele):
+    # -------------------------------------------------- xGAP berechnen --------------------------------------------------
+    xgap = abschlüsse.groupby(["SID", "AP"])["xG"].apply(lambda x: 1 - np.prod(1 - x))
 
-# neue Spalte xGAP setzen (nur bei höchster AbNr einer AP)
-abschlüsse["xGAP"] = abschlüsse.groupby(["SID","AP"])["xG"].transform(lambda x: 1 - np.prod(1-x))
-abschlüsse.loc[abschlüsse["AbNr"] != max_abnr, "xGAP"] = np.nan
+    # max AbNr pro AP bestimmen
+    max_abnr = abschlüsse.groupby(["SID", "AP"])["AbNr"].transform("max")
 
-# -------------------------------------------------- xPoints berechnen für alle Spiele --------------------------------------------------
-xG_end = abschlüsse.groupby(["SID", "HG"], as_index=False)["xGAP"].sum().rename(columns={"xGAP": "xG"})
+    # neue Spalte xGAP setzen (nur bei höchster AbNr einer AP)
+    abschlüsse["xGAP"] = np.where(
+        abschlüsse["AbNr"] == max_abnr,
+        abschlüsse.set_index(["SID", "AP"]).index.map(xgap),
+        np.nan
+    )
 
-xg_h = xG_end[xG_end["HG"] == "H"].rename(columns={"xG": "xGH"})
-xg_a = xG_end[xG_end["HG"] == "G"].rename(columns={"xG": "xGG"})
+    # -------------------------------------------------- xPoints berechnen --------------------------------------------------
+    xG_end = abschlüsse.groupby(["SID", "HG"], as_index=False)["xGAP"].sum().rename(columns={"xGAP": "xG"})
 
-spiele_üb = spiele.copy()
-spiele_üb = spiele_üb.merge(xg_h[["SID", "xGH"]], on="SID", how="left")
-spiele_üb = spiele_üb.merge(xg_a[["SID", "xGG"]], on="SID", how="left")
+    xg_h = xG_end[xG_end["HG"] == "H"].rename(columns={"xG": "xGH"})
+    xg_a = xG_end[xG_end["HG"] == "G"].rename(columns={"xG": "xGG"})
 
-xPH_list = []
-xPG_list = []
+    spiele_üb = spiele.copy()
+    spiele_üb = (spiele_üb.merge(xg_h[["SID", "xGH"]], on="SID", how="left").merge(xg_a[["SID", "xGG"]], on="SID", how="left"))
 
-for _, row in spiele_üb.iterrows():
-    lam_h = row["xGH"]
-    lam_a = row["xGG"]
+    xPH_list = []
+    xPG_list = []
 
-    h_goals_probs = [poisson.pmf(i, lam_h) for i in range(21)]
-    a_goals_probs = [poisson.pmf(i, lam_a) for i in range(21)]
+    for _, row in spiele_üb.iterrows():
+        lam_h = row["xGH"]
+        lam_a = row["xGG"]
 
-    match_probs = np.outer(h_goals_probs, a_goals_probs)
+        h_goals_probs = [poisson.pmf(i, lam_h) for i in range(21)]
+        a_goals_probs = [poisson.pmf(i, lam_a) for i in range(21)]
 
-    p_h_win = np.sum(np.tril(match_probs, -1))
-    p_h_draw = np.sum(np.diag(match_probs))
-    p_h_loss = np.sum(np.triu(match_probs, 1))
-    
-    xp_h = (p_h_win * 3) + (p_h_draw * 1) + (p_h_loss * 0)
-    xp_a = (p_h_win * 0) + (p_h_draw * 1) + (p_h_loss * 3)
+        match_probs = np.outer(h_goals_probs, a_goals_probs)
 
-    xPH_list.append(xp_h)
-    xPG_list.append(xp_a)
+        p_h_win = np.sum(np.tril(match_probs, -1))
+        p_h_draw = np.sum(np.diag(match_probs))
+        p_h_loss = np.sum(np.triu(match_probs, 1))
+        
+        xp_h = (p_h_win * 3) + (p_h_draw * 1) + (p_h_loss * 0)
+        xp_a = (p_h_win * 0) + (p_h_draw * 1) + (p_h_loss * 3)
 
-spiele_üb["xPH"] = xPH_list
-spiele_üb["xPG"] = xPG_list
+        xPH_list.append(xp_h)
+        xPG_list.append(xp_a)
 
-spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']] = spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']].round(2)
+    spiele_üb["xPH"] = xPH_list
+    spiele_üb["xPG"] = xPG_list
 
-# Heim-/Gast-DataFrames erstellen
-heim = spiele_üb[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']]
-gast = spiele_üb[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']]
+    spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']] = spiele_üb[['xGH', 'xGG', 'xPH', 'xPG']].round(2)
 
-heim["HG"] = "H"
-gast["HG"] = "G"
+    heim = spiele_üb[['SID', 'Datum', 'Heim', 'TH', 'xGH', 'PH', 'xPH']].copy()
+    gast = spiele_üb[['SID', 'Datum', 'Gast', 'TG', 'xGG', 'PG', 'xPG']].copy()
 
-heim.rename(columns={"Heim": "Team", "TH": "Tore", "PH": "Punkte", "xGH": "xG", "xPH": "xPoints"}, inplace=True)
-gast.rename(columns={"Gast": "Team", "TG": "Tore", "PG": "Punkte", "xGG": "xG", "xPG": "xPoints"}, inplace=True)
+    heim["HG"] = "H"
+    gast["HG"] = "G"
 
-# concat nur wenn DataFrames gefüllt
-if not heim.empty and not gast.empty:
+    heim = heim.rename(columns={"Heim": "Team", "TH": "Tore", "PH": "Punkte", "xGH": "xG", "xPH": "xPoints"})
+    gast = gast.rename(columns={"Gast": "Team", "TG": "Tore", "PG": "Punkte", "xGG": "xG", "xPG": "xPoints"})
+
     spiele_üb = pd.concat([heim, gast], ignore_index=True)
-    spiele_üb = spiele_üb[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']] \
-                    .sort_values(["SID", "HG"], ascending=[True, False])
+    spiele_üb = spiele_üb[['SID', 'Datum', 'Team', 'HG', 'Tore', 'xG', 'Punkte', 'xPoints']].sort_values(["SID", "HG"], ascending=[True, False])
 
-heimspiele = heim[heim["Team"]=="FCN"]["SID"].tolist()
-auswärtsspiele = gast[gast["Team"]=="FCN"]["SID"].tolist()
+    heimspiele = heim[heim["Team"]=="FCN"]["SID"].tolist()
+    auswärtsspiele = gast[gast["Team"]=="FCN"]["SID"].tolist()
+
+    return abschlüsse, spiele_üb, heimspiele, auswärtsspiele
+
+abschlüsse, spiele_üb, heimspiele, auswärtsspiele = compute_xgap_xpts(abschlüsse, spiele)
 
 # ================================================== EINZELSPIEL ==================================================
 # Heim- und Auswärtsteam splitten
@@ -180,11 +192,11 @@ else:
     df_a["cum_xGAP"] = df_a["xGAP"].cumsum().where(df_a["xGAP"].notna())
 
     # Split 1. und 2. Halbzeit
-    df_h_1 = df_h[df_h["HZ"]==1].copy()
-    df_h_2 = df_h[df_h["HZ"]==2].copy()
+    df_h_1 = df_h[df_h["HZ"]==1]
+    df_h_2 = df_h[df_h["HZ"]==2]
 
-    df_a_1 = df_a[df_a["HZ"]==1].copy()
-    df_a_2 = df_a[df_a["HZ"]==2].copy()
+    df_a_1 = df_a[df_a["HZ"]==1]
+    df_a_2 = df_a[df_a["HZ"]==2]
 
     # Einzelne cum_xGAP-Listen erstellen
     cum_xGAP_h_1 = [0]
@@ -254,7 +266,7 @@ else:
     gMin_a_2.extend(df_a_2.loc[df_a_2["Ergeb"].isin(["Tor", "ET"]), "Min"].tolist())
 
     # ---------- Vorbereitungen Spiel-Übersicht ----------
-    df_goals = abschlüsse[(abschlüsse["SID"] == game) & abschlüsse["Ergeb"].isin(["Tor", "ET"])].copy()
+    df_goals = abschlüsse[(abschlüsse["SID"] == game) & abschlüsse["Ergeb"].isin(["Tor", "ET"])]
 
     df_goals = df_goals.merge(
         teams[["TID", "Vereinsname"]],
@@ -471,8 +483,8 @@ else:
     ax_h1.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax_h2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
-
     st.pyplot(fig)
+    plt.close(fig)
 
 # ================================================== SPIEL-ÜBERSICHT ==================================================
 default_slider = (1, spiele["SID"].max())
@@ -505,6 +517,7 @@ with col2:
 spiele = spiele[spiele["SID"].between(start, end)].copy()
 abschlüsse = abschlüsse[abschlüsse["SID"].between(start, end)].copy()
 karten = karten[karten["SID"].between(start, end)].copy()
+spielzeiten = spielzeiten[spielzeiten["SID"].between(start, end)].copy()
 spiele_üb = spiele_üb[spiele_üb["SID"].between(start, end)].copy()
 
 ergebnisse_fcn = spiele_üb[spiele_üb["Team"]=="FCN"].copy()
@@ -517,41 +530,22 @@ abschlüsse_opp = abschlüsse[abschlüsse["TID"]!="FCN"].copy()
 # Hilfsspalten erstellen
 nummern = spieler["Nr"].unique()
 
-def player_on_pitch_h1(df_abschlüsse, df_spielzeiten, nummern):
+@st.cache_data
+def compute_player_on_pitch(df_abschlüsse, df_spielzeiten, nummern, hz_col_von, hz_col_bis):
+    df_pop = df_abschlüsse.copy()
     for i in nummern:
-        df_abschlüsse[f"Sp{i}"] = False  # Spalte anlegen
+        df_pop[f"Sp{i}"] = False  # Spalte anlegen
 
         # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten hat
         if i in df_spielzeiten["Nr"].values:
-            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", "1Von", "1Bis"]].dropna()
-            
+            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", hz_col_von, hz_col_bis]].dropna()
             if not zeiten.empty:
                 for _, row in zeiten.iterrows():
-                    sid = row["SID"]
-                    von = row["1Von"]
-                    bis = row["1Bis"]
-                    
-                    # Maske anwenden
-                    mask = (df_abschlüsse["SID"] == sid) & (df_abschlüsse["Min"].between(von, bis))
-                    df_abschlüsse.loc[mask, f"Sp{i}"] = True
+                    sid, von, bis = row["SID"], row[hz_col_von], row[hz_col_bis]
+                    mask = (df_pop["SID"] == sid) & (df_pop["Min"].between(von, bis))
+                    df_pop.loc[mask, f"Sp{i}"] = True
 
-def player_on_pitch_h2(df_abschlüsse, df_spielzeiten, nummern):
-    for i in nummern:
-        df_abschlüsse[f"Sp{i}"] = False  # Spalte anlegen
-
-        # Nur weitermachen, wenn Spieler überhaupt Einsatzzeiten hat
-        if i in df_spielzeiten["Nr"].values:
-            zeiten = df_spielzeiten.loc[df_spielzeiten["Nr"] == i, ["SID", "2Von", "2Bis"]].dropna()
-            
-            if not zeiten.empty:
-                for _, row in zeiten.iterrows():
-                    sid = row["SID"]
-                    von = row["2Von"]
-                    bis = row["2Bis"]
-                    
-                    # Maske anwenden
-                    mask = (df_abschlüsse["SID"] == sid) & (df_abschlüsse["Min"].between(von, bis))
-                    df_abschlüsse.loc[mask, f"Sp{i}"] = True
+    return df_pop
 
 # Für jede Halbzeit je eine Minutenliste erzeugen
 spiele["min_HZ1"] = spiele.apply(lambda r: list(range(1, r["1. HZ"] + 1)), axis=1)
@@ -575,19 +569,21 @@ df_minuten["HG"] = df_minuten["SID"].isin(heimspiele).map({True: "H", False: "G"
 df_minuten_h1 = df_minuten[df_minuten["HZ"]==1].copy()
 df_minuten_h2 = df_minuten[df_minuten["HZ"]==2].copy()
 
-player_on_pitch_h1(df_minuten_h1, spielzeiten, nummern)
-player_on_pitch_h2(df_minuten_h2, spielzeiten, nummern)
+df_minuten_h1 = compute_player_on_pitch(df_minuten_h1, spielzeiten, nummern, "1Von", "1Bis")
+df_minuten_h2 = compute_player_on_pitch(df_minuten_h2, spielzeiten, nummern, "2Von", "2Bis")
 
 df_minuten = pd.concat([df_minuten_h1, df_minuten_h2], ignore_index=True)
 df_minuten = df_minuten.sort_values(by=["SID", "HZ", "Min"], ascending=[True, True, True]).reset_index(drop=True)
 
-tore_fcn = abschlüsse_fcn[abschlüsse_fcn["Ergeb"].isin(["Tor", "ET"])].copy()
-tore_opp = abschlüsse_opp[abschlüsse_opp["Ergeb"].isin(["Tor", "ET"])].copy()
+tore_fcn = abschlüsse_fcn[abschlüsse_fcn["Ergeb"].isin(["Tor", "ET"])]
+tore_opp = abschlüsse_opp[abschlüsse_opp["Ergeb"].isin(["Tor", "ET"])]
 
 tore = pd.concat([tore_fcn, tore_opp], ignore_index=True)
 tore = tore.sort_values(by=["SID", "HZ", "Min", "AP"], ascending=[True, True, True, True]).reset_index(drop=True)
 
+@st.cache_data
 def compute_gamestate(df_minuten, df_tore, team="FCN"):
+    df_minuten = df_minuten.copy()
     # GS initialisieren
     df_minuten["GameState"] = 0
 
@@ -624,8 +620,12 @@ def compute_gamestate(df_minuten, df_tore, team="FCN"):
             # Ergebnis ins df_minuten übernehmen
             mask = (df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)
             df_minuten.loc[mask, "GameState"] = gs_list
+    
+    return df_minuten
 
+@st.cache_data
 def compute_playerstate(df_minuten, df_karten, team="FCN"):
+    df_minuten = df_minuten.copy()
     # PS initialisieren
     df_minuten["PlayerState"] = 0
 
@@ -662,23 +662,25 @@ def compute_playerstate(df_minuten, df_karten, team="FCN"):
             mask = (df_minuten["SID"] == sid) & (df_minuten["HZ"] == hz)
             df_minuten.loc[mask, "PlayerState"] = ps_list
 
-compute_gamestate(df_minuten, tore, team="FCN")
-compute_playerstate(df_minuten, karten, team="FCN")
+    return df_minuten
+
+df_minuten = compute_gamestate(df_minuten, tore, team="FCN")
+df_minuten = compute_playerstate(df_minuten, karten, team="FCN")
 
 df_minuten = df_minuten[df_minuten["SID"].between(start, end)].copy()
 
 # -------------------------------------------------- Filter Heim / Auswärts --------------------------------------------------
 if heimauswärts == "Heim":
-    ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="H"].copy()
-    ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="G"].copy()
-    abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="H"].copy()
-    abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="G"].copy()
+    ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="H"]
+    ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="G"]
+    abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="H"]
+    abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="G"]
     df_minuten = df_minuten[df_minuten["SID"].isin(heimspiele)]
 elif heimauswärts == "Auswärts":
-    ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="G"].copy()
-    ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="H"].copy()
-    abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="G"].copy()
-    abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="H"].copy()
+    ergebnisse_fcn = ergebnisse_fcn[ergebnisse_fcn["HG"]=="G"]
+    ergebnisse_opp = ergebnisse_opp[ergebnisse_opp["HG"]=="H"]
+    abschlüsse_fcn = abschlüsse_fcn[abschlüsse_fcn["HG"]=="G"]
+    abschlüsse_opp = abschlüsse_opp[abschlüsse_opp["HG"]=="H"]
     df_minuten = df_minuten[df_minuten["SID"].isin(auswärtsspiele)]
 
 if abschlüsse_fcn.empty and abschlüsse_opp.empty:
@@ -794,7 +796,7 @@ with col2:
 gefilterte_positionen = [position_map[a] for a in position]
 
 # -------------------------------------------------- Metriken berechnen --------------------------------------------------
-startelf = (spielzeiten[spielzeiten["1Von"] == 1].copy())["Nr"].value_counts().reset_index(name="Startelf")
+startelf = (spielzeiten[spielzeiten["1Von"] == 1])["Nr"].value_counts().reset_index(name="Startelf")
 spieler = spieler.merge(startelf, on="Nr", how="left")
 spieler["Startelf"] = spieler["Startelf"].fillna(0).astype(int)
 
@@ -814,14 +816,14 @@ schüsse_pro_spieler.columns = ["Nr", "Schüsse"]
 spieler = spieler.merge(schüsse_pro_spieler, on="Nr", how="left")
 spieler["Schüsse"] = (spieler["Schüsse"].fillna(0).round(2)).astype(int)
 
-tore = abschlüsse_fcn[abschlüsse_fcn["Ergeb"]=="Tor"].copy()
+tore = abschlüsse_fcn[abschlüsse_fcn["Ergeb"]=="Tor"]
 
 tore_pro_spieler = tore["SNr"].value_counts().reset_index()
 tore_pro_spieler.columns = ["Nr", "Tore"]
 spieler = spieler.merge(tore_pro_spieler, on="Nr", how="left")
 spieler["Tore"] = (spieler["Tore"].fillna(0).round(2)).astype(int)
 
-aufstor = abschlüsse_fcn[abschlüsse_fcn["Ergeb"].isin(["Tor", "Save", "TLK"])].copy()
+aufstor = abschlüsse_fcn[abschlüsse_fcn["Ergeb"].isin(["Tor", "Save", "TLK"])]
 
 aufstor_pro_spieler = aufstor["SNr"].value_counts().reset_index()
 aufstor_pro_spieler.columns = ["Nr", "Aufs Tor"]
@@ -885,19 +887,10 @@ spieler = spieler.merge(xgb_pro_spieler, on="Nr", how="left")
 spieler["xGBuildup"] = spieler["xGBuildup"].fillna(0).round(2)
 
 # -------------------------------------------------- xPlusMinus --------------------------------------------------
-abschlüsse_fcn_1 = abschlüsse_fcn[abschlüsse_fcn["HZ"] == 1].copy()
-abschlüsse_fcn_2 = abschlüsse_fcn[abschlüsse_fcn["HZ"] == 2].copy()
-abschlüsse_opp_1 = abschlüsse_opp[abschlüsse_opp["HZ"] == 1].copy()
-abschlüsse_opp_2 = abschlüsse_opp[abschlüsse_opp["HZ"] == 2].copy()
-
-dfs_h1 = [abschlüsse_fcn_1, abschlüsse_opp_1]
-dfs_h2 = [abschlüsse_fcn_2, abschlüsse_opp_2]
-
-for df in dfs_h1:
-    player_on_pitch_h1(df, spielzeiten, nummern)
-
-for df in dfs_h2:
-    player_on_pitch_h2(df, spielzeiten, nummern)
+abschlüsse_fcn_1 = compute_player_on_pitch(abschlüsse_fcn[abschlüsse_fcn["HZ"] == 1], spielzeiten, nummern, "1Von", "1Bis")
+abschlüsse_fcn_2 = compute_player_on_pitch(abschlüsse_fcn[abschlüsse_fcn["HZ"] == 2], spielzeiten, nummern, "2Von", "2Bis")
+abschlüsse_opp_1 = compute_player_on_pitch(abschlüsse_opp[abschlüsse_opp["HZ"] == 1], spielzeiten, nummern, "1Von", "1Bis")
+abschlüsse_opp_2 = compute_player_on_pitch(abschlüsse_opp[abschlüsse_opp["HZ"] == 2], spielzeiten, nummern, "2Von", "2Bis")
 
 abschlüsse_fcn = pd.concat([abschlüsse_fcn_1, abschlüsse_fcn_2], ignore_index=True)
 abschlüsse_opp = pd.concat([abschlüsse_opp_1, abschlüsse_opp_2], ignore_index=True)
@@ -1050,7 +1043,6 @@ else:
     einzelspieler = abschlüsse_fcn[abschlüsse_fcn["SNr"]==player].copy()
     minuten = int(spieler.loc[spieler["Nr"]==player, "Spielzeit"].values[0])
 
-
 einzelspieler = einzelspieler[einzelspieler["Vorbereitung"].isin(vorbereitung)]
 einzelspieler = einzelspieler[einzelspieler["Körperteil"].isin(schussart)]
 
@@ -1120,5 +1112,10 @@ else:
     ax1.set_facecolor(background_color)
     ax1.axis("off")
 
-
     st.pyplot(fig)
+    plt.close(fig)
+
+import psutil
+
+#process = psutil.Process()
+#st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
