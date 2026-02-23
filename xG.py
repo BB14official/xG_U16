@@ -82,7 +82,8 @@ spiele_filter["Gästeteam"] = spiele_filter["Gast"].map(teams.set_index("TID")["
 spiele_filter["Spiel"] = "(" + spiele_filter["SID"].astype(str) + ") " + spiele_filter["Heimteam"] + ' - ' + spiele_filter["Gästeteam"]
 
 # Selectbox Spiele
-game_filter = st.selectbox("Spiel auswählen", spiele_filter["Spiel"].unique())
+spiel_nr = spiele_filter["Spiel"].unique()
+game_filter = st.selectbox("Spiel auswählen", spiel_nr, index=len(spiel_nr) - 1)
 game = spiele_filter.loc[spiele_filter["Spiel"]==game_filter, "SID"].values[0]
 
 # Spieler-Filter erstellen
@@ -1114,3 +1115,4 @@ else:
 
     st.pyplot(fig)
     plt.close(fig)
+
