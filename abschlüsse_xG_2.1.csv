@@ -394,7 +394,7 @@
 389,15,FCD,G,FCN,2,13,1,0,,0,4,Save,AusDemSpiel,USO,KontrollierteVorlage,,,,,,,,,,,,,,L,0.5,39.5,0.24337701029317815
 390,15,FCD,G,FCN,3,20,1,0,,0,5,Block,AusDemSpiel,USO,Dribbling,,,,,,,,,,,,,,L,11.5,41.5,0.03213235950129387
 391,15,FCD,G,FCN,4,20,1,0,,0,6,Vorbei,AusDemSpiel,nEW,KontrollierteVorlage,,,,,,,,,,,,,,R,-2.0,30.5,0.09396582297076873
-392,15,FCD,G,FCN,5,23,1,0,,0,7,Vorbei,AusDemSpiel,USO,HoheFlanke,,,,,,,,,,,,,,R,6.5,43.5,0.18330990137294492
+392,15,FCD,G,FCN,5,23,1,0,,0,7,Vorbei,AusDemSpiel,USO,HoheFlanke,,,,,,,,,,,,,,R,6.5,43.5,0.20408879998736582
 393,15,FCN,H,FCD,3,34,1,0,,0,8,TLK,AusDemSpiel,USO,TieferPass,27.0,6.0,,,,,,,,,,,8.0,R,-10.0,45.5,0.31364269834175973
 394,15,FCN,H,FCD,4,36,1,0,,0,9,Block,AusDemSpiel,USO,Dribbling,6.0,20.0,4.0,,,,,,,,,,27.0,R,16.5,37.0,0.07995371158058899
 395,15,FCD,G,FCN,6,45,1,0,,0,10,Save,Freistoss,FSF,HoheFlanke,,,,,,,,,,,,,,K,10.5,38.0,0.029693685790741612
