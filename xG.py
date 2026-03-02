@@ -754,7 +754,9 @@ with col2:
         ps = st.multiselect("PlayerState", options_ps, default=st.session_state.ps, key="ps")
 
 def map_gs(value):
-    if value > 2:
+    if pd.isna(value):
+        return None
+    elif value > 2:
         return ">2"
     elif value < -2:
         return "<-2"
@@ -765,7 +767,9 @@ abschlüsse_fcn["gs_filt"] = abschlüsse_fcn["GS"].apply(map_gs)
 df_minuten["gs_filt"] = df_minuten["GameState"].apply(map_gs)
 
 def map_ps(value):
-    if value > 1:
+    if pd.isna(value):
+        return None
+    elif value > 1:
         return ">1"
     elif value < -1:
         return "<-1"
@@ -1127,3 +1131,4 @@ import psutil
 #process = psutil.Process()
 
 #st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
+
