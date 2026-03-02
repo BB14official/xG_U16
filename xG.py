@@ -18,8 +18,8 @@ st.subheader("Expected Goals 2025/26")
 # Neue Daten einlesen
 @st.cache_data
 def load_data():
-    abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-    xls = "xG_U16_Anwendung.xlsx"
+    abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+    xls = "xG/xG_U16_Anwendung.xlsx"
     teams = pd.read_excel(xls, sheet_name="Teams")
     spiele = pd.read_excel(xls, sheet_name="Spiele")
     spieler = pd.read_excel(xls, sheet_name="Spieler")
@@ -32,7 +32,7 @@ abschlüsse, teams, spiele, spieler, spielzeiten, karten = load_data()
 # Setting custom font
 @st.cache_resource
 def load_font():
-    return font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+    return font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 font_props = load_font()
 
@@ -753,21 +753,31 @@ with col2:
         gs = st.multiselect("GameState", options_gs, default=st.session_state.gs, key="gs")
         ps = st.multiselect("PlayerState", options_ps, default=st.session_state.ps, key="ps")
 
-abschlüsse_fcn["gs_filt"] = abschlüsse_fcn["GS"].astype(str)
-abschlüsse_fcn.loc[abschlüsse_fcn["GS"] > 2, "gs_filt"] = ">2"
-abschlüsse_fcn.loc[abschlüsse_fcn["GS"] < -2, "gs_filt"] = "<-2"
+def map_gs(value):
+    if pd.isna(value):
+        return None
+    elif value > 2:
+        return ">2"
+    elif value < -2:
+        return "<-2"
+    else:
+        return str(int(value))
 
-df_minuten["gs_filt"] = df_minuten["GameState"].astype(str)
-df_minuten.loc[df_minuten["GameState"] > 2, "gs_filt"] = ">2"
-df_minuten.loc[df_minuten["GameState"] < -2, "gs_filt"] = "<-2"
+abschlüsse_fcn["gs_filt"] = abschlüsse_fcn["GS"].apply(map_gs)
+df_minuten["gs_filt"] = df_minuten["GameState"].apply(map_gs)
 
-abschlüsse_fcn["ps_filt"] = abschlüsse_fcn["PR"].astype(str)
-abschlüsse_fcn.loc[abschlüsse_fcn["PR"] > 1, "ps_filt"] = ">1"
-abschlüsse_fcn.loc[abschlüsse_fcn["PR"] < -1, "ps_filt"] = "<-1"
+def map_ps(value):
+    if pd.isna(value):
+        return None
+    elif value > 1:
+        return ">1"
+    elif value < -1:
+        return "<-1"
+    else:
+        return str(int(value))
 
-df_minuten["ps_filt"] = df_minuten["PlayerState"].astype(str)
-df_minuten.loc[df_minuten["PlayerState"] > 1, "ps_filt"] = ">1"
-df_minuten.loc[df_minuten["PlayerState"] < -1, "ps_filt"] = "<-1"
+abschlüsse_fcn["ps_filt"] = abschlüsse_fcn["PR"].apply(map_ps)
+df_minuten["ps_filt"] = df_minuten["PlayerState"].apply(map_ps)
 
 phase = st.multiselect("Spielphase", options_phase, default=st.session_state.phase, key="phase")
 
@@ -1116,3 +1126,7 @@ else:
     st.pyplot(fig)
     plt.close(fig)
 
+import psutil
+
+#process = psutil.Process()
+#st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
