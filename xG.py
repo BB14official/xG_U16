@@ -19,7 +19,7 @@ st.subheader("Expected Goals 2025/26")
 @st.cache_data
 def load_data():
     abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-    xls = "xG/xG_U16_Anwendung.xlsx"
+    xls = "xG_U16_Anwendung.xlsx"
     teams = pd.read_excel(xls, sheet_name="Teams")
     spiele = pd.read_excel(xls, sheet_name="Spiele")
     spieler = pd.read_excel(xls, sheet_name="Spieler")
@@ -1131,3 +1131,4 @@ import psutil
 #process = psutil.Process()
 
 #st.write(f"Aktueller RAM-Verbrauch: {process.memory_info().rss / 1024**2:.2f} MB")
+
