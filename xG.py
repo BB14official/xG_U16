@@ -42,7 +42,7 @@ teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C2001
 
 theme = st.get_option("theme.base")
 
-if theme == "dark":
+if theme == "Dark":
     background_color = "#262730"
     text_color = "#FAFAFA"
 else:
@@ -1133,4 +1133,5 @@ else:
 
 
     plt.close(fig)
+
 
