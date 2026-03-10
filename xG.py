@@ -18,8 +18,8 @@ st.subheader("Expected Goals 2025/26")
 # Neue Daten einlesen
 @st.cache_data
 def load_data():
-    abschlüsse = pd.read_csv("abschlüsse_xG_2.1.csv")
-    xls = "xG_U16_Anwendung.xlsx"
+    abschlüsse = pd.read_csv("xG/abschlüsse_xG_2.1.csv")
+    xls = "xG/xG_U16_Anwendung.xlsx"
     teams = pd.read_excel(xls, sheet_name="Teams")
     spiele = pd.read_excel(xls, sheet_name="Spiele")
     spieler = pd.read_excel(xls, sheet_name="Spieler")
@@ -32,7 +32,7 @@ abschlüsse, teams, spiele, spieler, spielzeiten, karten = load_data()
 # Setting custom font
 @st.cache_resource
 def load_font():
-    return font_manager.FontProperties(fname="dfb-sans-web-bold.64bb507.ttf")
+    return font_manager.FontProperties(fname="xG/dfb-sans-web-bold.64bb507.ttf")
 
 font_props = load_font()
 
@@ -347,8 +347,14 @@ else:
     from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
     # -------------------------------------------------- GridSpec-Layout --------------------------------------------------
-    background_color = "#262730" #"#F8F5E9"
-    text_color = "white"
+    theme = st.get_option("theme.base")
+
+if theme == "dark":
+    background_color = "#262730"
+    text_color = "#FAFAFA"
+else:
+    background_color = "#F0F2F6"
+    text_color = "#31333F"
 
     fig = plt.figure(figsize=(14, 12), constrained_layout=True)
     fig.set_facecolor(background_color)
