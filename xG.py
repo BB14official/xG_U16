@@ -12,7 +12,8 @@ import football_functions_2 as ff
 from scipy.stats import poisson
 
 st.title("1. FC Nürnberg U16")
-st.subheader("Expected Goals 2025/26")
+col1, col2 = st.columns([77, 23])
+with col1 = st.subheader("Expected Goals 2025/26")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
@@ -40,7 +41,7 @@ font_props = load_font()
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
 
-mode = st.toggle("Dark Mode", value=True)
+mode = st.toggle("Dark", value=True)
 
 if mode:
     background_color = "#262730"
@@ -1133,6 +1134,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
