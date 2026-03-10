@@ -16,9 +16,10 @@ col1, col2, col3 = st.columns([70, 15, 15])
 with col1:
     st.subheader("Expected Goals 2025/26")
 with col2:
-    st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     st.write("Light")
 with col3:
+    st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
     mode = st.toggle("Dark", value=True)    
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
@@ -1138,6 +1139,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
