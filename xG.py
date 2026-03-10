@@ -40,6 +40,15 @@ font_props = load_font()
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
 
+theme = st.get_option("theme.base")
+
+if theme == "dark":
+    background_color = "#262730"
+    text_color = "#FAFAFA"
+else:
+    background_color = "#F0F2F6"
+    text_color = "#31333F"
+
 # Spielphasen ersetzen
 abschlüsse["Spielphase"] = abschlüsse["Spielphase"].replace({
     "nFS": "Freistoss",
@@ -347,15 +356,6 @@ else:
     from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
     # -------------------------------------------------- GridSpec-Layout --------------------------------------------------
-    theme = st.get_option("theme.base")
-
-if theme == "dark":
-    background_color = "#262730"
-    text_color = "#FAFAFA"
-else:
-    background_color = "#F0F2F6"
-    text_color = "#31333F"
-
     fig = plt.figure(figsize=(14, 12), constrained_layout=True)
     fig.set_facecolor(background_color)
 
@@ -1133,3 +1133,4 @@ else:
 
 
     plt.close(fig)
+
