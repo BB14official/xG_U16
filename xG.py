@@ -40,9 +40,14 @@ font_props = load_font()
 teams["color"] = ["#AA1124", "#F8D615", "#CD1719", "#ED1248", "#006BB3", "#C20012", "#E3191B", "#03466A", 
                   "#2FA641", "#009C6B", "#ED1B24", "#E3000F", "#2E438C", "#5AAADF", "#EE232B"]
 
-mode = st.toggle("Dark Mode", value=True)
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
 
-if mode:
+mode = st.toggle("Dark Mode", value=st.session_state.theme == "dark")
+
+st.session_state.theme = "dark" if mode else "light"
+
+if st.session_state.theme == "dark":
     background_color = "#262730"
     text_color = "#FAFAFA"
 else:
@@ -1133,6 +1138,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
