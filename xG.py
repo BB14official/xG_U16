@@ -16,7 +16,7 @@ col1, col2, col3 = st.columns([80, 8, 12])
 with col1:
     st.subheader("Expected Goals 2025/26")
 with col2:
-    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:9px'></div>", unsafe_allow_html=True)
     st.write("Light")
 with col3:
     st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
@@ -1139,6 +1139,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
