@@ -12,7 +12,7 @@ import football_functions_2 as ff
 from scipy.stats import poisson
 
 st.title("1. FC Nürnberg U16")
-col1, col2, col3 = st.columns([80, 8, 12])
+col1, col2, col3 = st.columns([82, 6, 12])
 with col1:
     st.subheader("Expected Goals 2025/26")
 with col2:
@@ -1139,6 +1139,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
