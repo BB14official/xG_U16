@@ -12,9 +12,11 @@ import football_functions_2 as ff
 from scipy.stats import poisson
 
 st.title("1. FC Nürnberg U16")
-col1, col2 = st.columns([77, 23])
+col1, col2, col3 = st.columns([50, 25, 25])
 with col1:
     st.subheader("Expected Goals 2025/26")
+with col2:
+    st.write("Light")
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
@@ -1135,6 +1137,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
