@@ -20,7 +20,7 @@ with col2:
     st.write("Light")
 with col3:
     st.markdown("<div style='height:0px'></div>", unsafe_allow_html=True)
-    mode = st.toggle("Dark", value=True)    
+    mode = st.toggle(" Dark", value=True)    
 
 # ================================================== ALLGEMEINE VORBEREITUNGEN ==================================================
 # Neue Daten einlesen
@@ -1139,6 +1139,7 @@ else:
 
 
     plt.close(fig)
+
 
 
 
